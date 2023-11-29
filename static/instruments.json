@@ -1,0 +1,95 @@
+{
+  "percussion": {
+    "Bentley Rhythm Ace": {
+      "pitched": false,
+      "files": [
+        "closed-hat.wav",
+        "kick.wav",
+        "open-hat.wav",
+        "snare.wav",
+        "tom1.wav",
+        "tom2.wav",
+        "tom3.wav"
+      ]
+    },
+    "Selmer Auto-Rhythm": {
+      "pitched": false,
+      "files": [
+        "click1.wav",
+        "click2.wav",
+        "click3.wav",
+        "closed-hat.wav",
+        "kick1.wav",
+        "kick2.wav",
+        "kick3.wav",
+        "open-hat1.wav",
+        "open-hat2.wav",
+        "snare.wav"
+      ]
+    },
+    "Vermona DRM1": {
+      "pitched": false,
+      "files": [
+        "clap01.wav",
+        "clap02.wav",
+        "clap03.wav",
+        "clap04.wav",
+        "clap05.wav",
+        "hat01.wav",
+        "hat02.wav",
+        "hat03.wav",
+        "hat04.wav",
+        "hat05.wav",
+        "hat06.wav",
+        "hat07.wav",
+        "hat08.wav",
+        "hat09.wav",
+        "hat10.wav",
+        "hat11.wav",
+        "hat12.wav",
+        "hat13.wav",
+        "kick01.wav",
+        "kick02.wav",
+        "kick03.wav",
+        "kick04.wav",
+        "kick05.wav",
+        "kick06.wav",
+        "kick07.wav",
+        "kick08.wav",
+        "kick09.wav",
+        "kick10.wav",
+        "perc01.wav",
+        "perc02.wav",
+        "perc03.wav",
+        "perc04.wav",
+        "perc05.wav",
+        "perc06.wav",
+        "perc07.wav",
+        "perc08.wav",
+        "perc09.wav",
+        "perc10.wav",
+        "perc11.wav",
+        "perc12.wav",
+        "snare01.wav",
+        "snare02.wav",
+        "snare03.wav",
+        "snare04.wav",
+        "snare05.wav",
+        "snare06.wav",
+        "snare07.wav",
+        "snare08.wav",
+        "snare09.wav",
+        "snare10.wav"
+      ]
+    }
+  },
+  "keyboards": {
+    "casio": {
+      "pitched": true,
+      "files": [
+        "A1.mp3",
+        "A2.mp3"
+      ]
+    }
+  }
+}

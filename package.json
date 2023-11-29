@@ -1,0 +1,26 @@
+{
+  "name": "daw",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "esbuild-scripts build",
+    "start": "esbuild-scripts start",
+    "typecheck": "tsc -noEmit"
+  },
+  "author": "thesmartwon",
+  "license": "MIT",
+  "devDependencies": {
+    "esbuild-copy-static-files": "^0.1.0",
+    "esbuild-css-modules-plugin": "^3.0.3",
+    "esbuild-plugin-template": "^0.0.4",
+    "esbuild-scripts": "^0.0.7",
+    "typescript": "^5.3.2"
+  },
+  "dependencies": {
+    "mime": "^3.0.0",
+    "preact": "^10.19.2",
+    "preact-router": "^4.1.2",
+    "tone": "^14.7.77"
+  }
+}

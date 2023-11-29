@@ -1,0 +1,17 @@
+{
+	"compilerOptions": {
+		"target": "esnext",
+		"module": "NodeNext",
+		"moduleResolution": "NodeNext",
+		"isolatedModules": true,
+		"noEmit": true,
+		"strict": true,
+		"esModuleInterop": true,
+		"jsx": "react-jsx",
+		"jsxImportSource": "preact",
+		"resolveJsonModule": true
+	},
+	"include": [
+		"src"
+	]
+}

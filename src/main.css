@@ -1,0 +1,14 @@
+html, body, div[id='root'] {
+	height: 100%;
+	background: rgb(var(--bg));
+	color: rgb(var(--fg));
+	width: 100%;
+	height: 100vh;
+}
+
+div[id='root'] {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+}
+
