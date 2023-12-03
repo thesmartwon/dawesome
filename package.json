@@ -18,6 +18,7 @@
     "typescript": "^5.3.2"
   },
   "dependencies": {
+    "@preact/signals": "^1.2.2",
     "mime": "^3.0.0",
     "preact": "^10.19.2",
     "preact-router": "^4.1.2",

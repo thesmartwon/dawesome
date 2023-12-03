@@ -27,8 +27,8 @@ function Player({ category, name, instrument }: InstrumentProps) {
 			return acc;
 		}, {} as { [k: string]: string });
 		const baseUrl = `${category}/${name}/`;
-		const sampler = new Sampler({ urls, baseUrl }).toDestination();
-		return <Piano sampler={sampler} />;
+		const sampler = new Sampler({ urls, baseUrl, attack: 0, }).toDestination();
+		return <Piano instrument={sampler as any} />;
 	}
 
 	return <p>unsupported category {category}</p>;
@@ -37,7 +37,7 @@ function Player({ category, name, instrument }: InstrumentProps) {
 export function InstrumentPlayer({ name, category, instrument }: InstrumentProps) {
 	return (
 		<div>
-			<h1>{name} ({instrument.files.length} files)</h1>
+			<h1>{name} ({instrument.files.length} samples)</h1>
 			<Player name={name} category={category} instrument={instrument} />
 		</div>
 	);
