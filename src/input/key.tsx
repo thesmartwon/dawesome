@@ -1,4 +1,4 @@
-import { useRef } from 'preact/hooks';
+import { useState } from 'preact/hooks';
 import { Instrument } from 'tone/Tone/instrument/Instrument.js';
 import { Note } from '../note.js';
 import classes from './key.css';
@@ -6,15 +6,20 @@ import classes from './key.css';
 interface KeyProps {
 	n: Note;
 	instrument: Instrument<any>;
+	held: boolean;
 };
 
-export function Key({ n, instrument }: KeyProps) {
-	const li = useRef<HTMLLIElement | null>(null);
+export function Key({ n, instrument, held }: KeyProps) {
+	const [isHeld, setIsHeld] = useState(held);
 
 	function triggerAttack() {
 		instrument.triggerAttack(n);
-		li.current?.classList.toggle(classes.active);
-		setTimeout(() => li.current?.classList.toggle(classes.active), 100);
+		setIsHeld(true);
+	}
+
+	function triggerRelease() {
+		instrument.triggerRelease(n);
+		setIsHeld(false);
 	}
 
 	return (
@@ -23,12 +28,14 @@ export function Key({ n, instrument }: KeyProps) {
 				[
 					classes.key,
 					['#', 'b'].includes(n[1]) ? classes.black : classes.white,
+					(held || isHeld) ? classes.active : '',
 				].join(' ')
 			}
-			ref={li}
 		>
 			<button
 				onMouseDown={triggerAttack}
+				onMouseUp={triggerRelease}
+				onMouseLeave={triggerRelease}
 				onMouseEnter={ev => {
 					if (ev.buttons == 0) return;
 					triggerAttack();
