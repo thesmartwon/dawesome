@@ -1,6 +1,7 @@
 import { Sampler } from 'tone';
 import { Piano } from './input/piano.js';
 import { Percussion } from './input/percussion.js';
+import { Instrument as ToneInstrument } from 'tone/Tone/instrument/Instrument.js';
 
 // Copy from indexer.js
 export type Category =
@@ -10,47 +11,60 @@ export type Category =
 	| 'brass'
 	| 'keyboards';
 
-export interface Instrument {
-	pitched: boolean;
+export interface InstrumentData {
+	sampled: boolean;
 	files: string[];
 }
 
 interface InstrumentProps {
 	category: Category;
 	name: string;
-	instrument: Instrument;
+	instrument: InstrumentData;
 }
 
-function Player({ category, name, instrument }: InstrumentProps) {
-	const baseUrl = `${category}/${name}/`;
-	if (category === 'keyboards') {
-		const urls = instrument.files.reduce((acc, cur) => {
-			acc[cur] = cur;
-			return acc;
-		}, {} as { [k: string]: string });
-		const sampler = new Sampler({ urls, baseUrl, attack: 0, }).toDestination();
-		return <Piano instrument={sampler as any} />;
-	} else if (category === 'percussion') {
-		// https://www.midi.org/specifications-old/item/gm-level-1-sound-set
-		const urls = instrument.files.reduce((acc, cur, i) => {
-			acc[i + 1] = cur;
-			console.log(i + 1, cur)
-			return acc;
-		}, {} as { [k: number]: string });
-		const sampler = new Sampler({ urls, baseUrl }).toDestination();
-		return <Percussion instrument={sampler as any} files={instrument.files} />
-	}
+const players = {
+	'keyboards': {
+		component: Piano,
+		toneInstrument({ category, name, instrument }: InstrumentProps): ToneInstrument<any> {
+			const baseUrl = `${category}/${name}/`;
+			const urls = instrument.files.reduce((acc, cur) => {
+				acc[cur] = cur;
+				return acc;
+			}, {} as { [k: string]: string });
+			return new Sampler({ urls, baseUrl, attack: 0, });
+		}
+	},
+	'percussion': {
+		component: Percussion,
+		toneInstrument({ category, name, instrument }: InstrumentProps): ToneInstrument<any> {
+			const baseUrl = `${category}/${name}/`;
+			// https://www.midi.org/specifications-old/item/gm-level-1-sound-set
+			const urls = instrument.files.reduce((acc, cur, i) => {
+				acc[i + 1] = cur;
+				return acc;
+			}, {} as { [k: number]: string });
+			return new Sampler({ urls, baseUrl });
+		}
+	},
+};
 
+export function Instrument(props: InstrumentProps) {
+	const player = players[props.category];
+	const toneInstrument = player?.toneInstrument(props).toDestination() as any;
+	const Component = player?.component;
 	// useEffect(() => instrument.releaseAll, []);
 
-	return <p>no {category} player yet</p>;
-}
-
-export function InstrumentPlayer({ name, category, instrument }: InstrumentProps) {
 	return (
 		<div>
-			<h1>{name} ({instrument.files.length} samples)</h1>
-			<Player name={name} category={category} instrument={instrument} />
+			<h1>{name} ({props.instrument.files.length} samples)</h1>
+			{Component
+				? <Component
+						name={props.name}
+						category={props.category}
+						instrument={toneInstrument}
+						instrumentData={props.instrument}
+					/>
+				: `no player for category ${category}`}
 		</div>
 	);
 }

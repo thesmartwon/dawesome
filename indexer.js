@@ -13,25 +13,11 @@ const categories = [
 	'keyboards',
 ];
 
-function isScientificPitchNotation(s) {
-	return s.match(/^[A-F](-1|[0-9]|10)$/);
-}
-
-function isPitched(files) {
-	for (let f of files) {
-		const basename = path.basename(f);
-		const withoutExt = basename.replace(/\.[^/.]+$/, "");
-		if (isScientificPitchNotation(withoutExt)) return true;
-	}
-
-	return false;
-}
-
 function addInstrument(category, instrument) {
 	const files = fs.readdirSync(path.join('static', category, instrument));
 	index[category] = index[category] || {};
 	index[category][instrument] = {
-		pitched: isPitched(files),
+		sampled: true,
 		files: files.filter(f => mime.getType(f).startsWith('audio/')),
 	};
 }

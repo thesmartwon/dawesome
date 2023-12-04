@@ -1,3 +1,4 @@
+import type { InstrumentData } from '../instrument.js';
 import { Instrument } from 'tone/Tone/instrument/Instrument.js';
 import { useState } from 'preact/hooks';
 import { Midi } from 'tone';
@@ -6,7 +7,7 @@ import classes from './percussion.css';
 
 interface Percussion {
 	instrument: Instrument<any>;
-	files: string[];
+	instrumentData: InstrumentData;
 }
 
 interface Sound {
@@ -66,8 +67,8 @@ function SoundButton({ instrument, sound } : SoundButton) {
 	);
 }
 
-export function Percussion({ instrument, files }: Percussion) {
-	const sounds = files.reduce((acc, cur, i) => {
+export function Percussion({ instrument, instrumentData }: Percussion) {
+	const sounds = instrumentData.files.reduce((acc, cur, i) => {
 		const firstDigit = cur.match(/\d/);
 		const suffixStart = firstDigit ? firstDigit.index : cur.indexOf('.');
 		const noSuffix = cur.substring(0, suffixStart);

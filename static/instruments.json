@@ -1,7 +1,7 @@
 {
   "percussion": {
     "Bentley Rhythm Ace": {
-      "pitched": false,
+      "sampled": true,
       "files": [
         "closed-hat.wav",
         "kick.wav",
@@ -13,7 +13,7 @@
       ]
     },
     "Selmer Auto-Rhythm": {
-      "pitched": false,
+      "sampled": true,
       "files": [
         "click1.wav",
         "click2.wav",
@@ -28,7 +28,7 @@
       ]
     },
     "Vermona DRM1": {
-      "pitched": false,
+      "sampled": true,
       "files": [
         "clap1.wav",
         "clap2.wav",
@@ -85,7 +85,7 @@
   },
   "keyboards": {
     "casio": {
-      "pitched": true,
+      "sampled": true,
       "files": [
         "A1.mp3",
         "A2.mp3"

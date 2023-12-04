@@ -1,10 +1,10 @@
-import { Player, Category, InstrumentPlayer } from './instrument.js';
+import { Instrument, Category, InstrumentData } from './instrument.js';
 import { useEffect, useState } from 'preact/hooks';
 import classes from './instruments.css';
 
 type Index = {
 	[k in Category]: {
-		[k2: string]: Player
+		[k2: string]: InstrumentData
 	}
 };
 
@@ -12,7 +12,7 @@ export function Instruments() {
 	const [index, setIndex] = useState<Index>({} as Index);
 	const [name, setName] = useState('');
 	const [category, setCategory] = useState<Category>('percussion');
-	const [instrument, setInstrument] = useState<Player | null>(null);
+	const [instrument, setInstrument] = useState<InstrumentData | null>(null);
 
 	useEffect(() => {
 		fetch('/instruments.json')
@@ -41,7 +41,7 @@ export function Instruments() {
 				))}
 			</div>
 			<div class={classes.player}>
-				{instrument && <InstrumentPlayer name={name} category={category} instrument={instrument} />}
+				{instrument && <Instrument name={name} category={category} instrument={instrument} />}
 			</div>
 		</div>
 	);
