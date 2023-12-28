@@ -1,9 +1,22 @@
 .piano {
+	/* measurements */
+	--white-height-cm: 14.2;
+	--white-width-cm: 2.2;
+	--black-width-cm: 1.5;
+	--black-height-cm: 9.2;
+
+	--white-height: 400px;
+	--white-width: calc(var(--white-height) * var(--white-width-cm) / var(--white-height-cm));
+	--black-height: calc(var(--white-height) * var(--black-height-cm) / var(--white-height-cm));
+	--black-width: calc(var(--white-height) * var(--black-width-cm) / var(--white-height-cm));
+
+	width: 100%;
 	list-style: none;
 	user-select: none;
-	position: relative;
 	display: flex;
-	overflow: auto;
+	overflow-x: auto;
+	overflow-y: hidden;
+	height: var(--white-height);
 }
 
 .piano :first-child {

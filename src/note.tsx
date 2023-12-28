@@ -1,3 +1,6 @@
+import { StateUpdater } from 'preact/hooks';
+import classes from './note.css';
+
 export type Note =
 	| "Cbb-4"
 	| "Cb-4"
@@ -560,3 +563,25 @@ export type Note =
 	| "B#11"
 	| "Bx11";
 
+export function isBlack(n: Note): boolean {
+	return ['#', 'b'].includes(n[1]);
+}
+
+export interface NoteProps {
+	label: string;
+	value: Note;
+	setValue: StateUpdater<Note>;
+};
+export function Note({ label, value, setValue }: NoteProps) {
+	return (
+		<form>
+			<label id={label}>{label}</label>
+			<input
+				class={classes.note}
+				name={label}
+				value={value}
+				onChange={ev => setValue(ev.currentTarget.value)}
+			/>
+		</form>
+	);
+}

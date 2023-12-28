@@ -41,7 +41,13 @@ export function Instruments() {
 				))}
 			</div>
 			<div class={classes.player}>
-				{instrument && <Instrument name={name} category={category} instrument={instrument} />}
+				{instrument &&
+					<Instrument
+						name={name}
+						category={category}
+						instrument={instrument}
+						autofocus={true}
+					/>}
 			</div>
 		</div>
 	);

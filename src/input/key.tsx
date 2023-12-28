@@ -1,15 +1,16 @@
 import { useState } from 'preact/hooks';
 import { Instrument } from 'tone/Tone/instrument/Instrument.js';
-import { Note } from '../note.js';
+import { Note, isBlack } from '../note.js';
 import classes from './key.css';
 
 interface KeyProps {
 	n: Note;
 	instrument: Instrument<any>;
 	held: boolean;
+	hotkey: string;
 };
 
-export function Key({ n, instrument, held }: KeyProps) {
+export function Key({ n, instrument, held, hotkey }: KeyProps) {
 	const [isHeld, setIsHeld] = useState(held);
 
 	function triggerAttack() {
@@ -27,8 +28,9 @@ export function Key({ n, instrument, held }: KeyProps) {
 			class={
 				[
 					classes.key,
-					['#', 'b'].includes(n[1]) ? classes.black : classes.white,
-					(held || isHeld) ? classes.active : '',
+					isBlack(n) ? classes.black : classes.white,
+					['C', 'F'].includes(n[0]) ? '' : classes.marginLeft,
+					(held || isHeld) ? classes.held : '',
 				].join(' ')
 			}
 		>
@@ -40,8 +42,11 @@ export function Key({ n, instrument, held }: KeyProps) {
 					if (ev.buttons == 0) return;
 					triggerAttack();
 				}}
+				/* playable via hotkeys */
+				tabindex={-1}
 			>
 				{n}
+				{hotkey && <div>{hotkey}</div>}
 			</button>
 		</li>
 	);

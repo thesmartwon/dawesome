@@ -20,6 +20,7 @@ interface InstrumentProps {
 	category: Category;
 	name: string;
 	instrument: InstrumentData;
+	autofocus: boolean;
 }
 
 const players = {
@@ -56,15 +57,16 @@ export function Instrument(props: InstrumentProps) {
 
 	return (
 		<div>
-			<h1>{name} ({props.instrument.files.length} samples)</h1>
+			<h1>{props.name} ({props.instrument.files.length} samples)</h1>
 			{Component
 				? <Component
 						name={props.name}
 						category={props.category}
 						instrument={toneInstrument}
 						instrumentData={props.instrument}
+						autofocus={props.autofocus}
 					/>
-				: `no player for category ${category}`}
+				: `no player for category ${props.category}`}
 		</div>
 	);
 }
