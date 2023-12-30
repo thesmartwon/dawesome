@@ -6,6 +6,7 @@ export class LiveMixer {
 
 	constructor() {
 		this.context = new AudioContext();
+		GainNode()
 		this.analyser = this.context.createAnalyser();
 		this.analyser.connect(this.context.destination);
 	}

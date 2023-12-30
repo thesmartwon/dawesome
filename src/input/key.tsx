@@ -1,6 +1,6 @@
 import { useState } from 'preact/hooks';
 import { Instrument } from 'tone/Tone/instrument/Instrument.js';
-import { Note, isBlack } from '../note.js';
+import { Note, isBlack as isSharp } from '../note.js';
 import classes from './key.css';
 
 interface KeyProps {
@@ -28,7 +28,7 @@ export function Key({ n, instrument, held, hotkey }: KeyProps) {
 			class={
 				[
 					classes.key,
-					isBlack(n) ? classes.black : classes.white,
+					isSharp(n) ? classes.black : classes.white,
 					['C', 'F'].includes(n[0]) ? '' : classes.marginLeft,
 					(held || isHeld) ? classes.held : '',
 				].join(' ')
@@ -45,8 +45,8 @@ export function Key({ n, instrument, held, hotkey }: KeyProps) {
 				/* playable via hotkeys */
 				tabindex={-1}
 			>
-				{n}
 				{hotkey && <div>{hotkey}</div>}
+				{n}
 			</button>
 		</li>
 	);

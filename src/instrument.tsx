@@ -1,3 +1,4 @@
+import { JSX } from 'preact';
 import { Sampler } from 'tone';
 import { Piano } from './input/piano.js';
 import { Percussion } from './input/percussion.js';
@@ -23,18 +24,24 @@ interface InstrumentProps {
 	autofocus: boolean;
 }
 
+interface Player {
+	component: JSX.ElementType<any>;
+	toneInstrument: (p: InstrumentProps) => ToneInstrument<any>;
+}
+
+const defaultPlayer: Player = {
+	component: () => <div>need to make player</div>,
+	toneInstrument({ category, name, instrument }: InstrumentProps): ToneInstrument<any> {
+		const baseUrl = `${category}/${name}/`;
+		const urls = instrument.files.reduce((acc, cur) => {
+			acc[cur] = cur;
+			return acc;
+		}, {} as { [k: string]: string });
+		return new Sampler({ urls, baseUrl, attack: 0 });
+	}
+};
+
 const players = {
-	'keyboards': {
-		component: Piano,
-		toneInstrument({ category, name, instrument }: InstrumentProps): ToneInstrument<any> {
-			const baseUrl = `${category}/${name}/`;
-			const urls = instrument.files.reduce((acc, cur) => {
-				acc[cur] = cur;
-				return acc;
-			}, {} as { [k: string]: string });
-			return new Sampler({ urls, baseUrl, attack: 0, });
-		}
-	},
 	'percussion': {
 		component: Percussion,
 		toneInstrument({ category, name, instrument }: InstrumentProps): ToneInstrument<any> {
@@ -47,7 +54,21 @@ const players = {
 			return new Sampler({ urls, baseUrl });
 		}
 	},
-};
+	'keyboards': {
+		component: Piano,
+		toneInstrument({ category, name, instrument }: InstrumentProps): ToneInstrument<any> {
+			const baseUrl = `${category}/${name}/`;
+			const urls = instrument.files.reduce((acc, cur) => {
+				acc[cur] = cur;
+				return acc;
+			}, {} as { [k: string]: string });
+			return new Sampler({ urls, baseUrl, attack: 0 });
+		}
+	},
+	'woodwinds': defaultPlayer,
+	'brass': defaultPlayer,
+	'strings': defaultPlayer,
+} as { [k in Category]: Player };
 
 export function Instrument(props: InstrumentProps) {
 	const player = players[props.category];

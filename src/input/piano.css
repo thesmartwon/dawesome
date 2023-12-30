@@ -19,11 +19,3 @@
 	height: var(--white-height);
 }
 
-.piano :first-child {
-	border-radius: 5px 0 5px 5px;
-}
-
-.piano :last-child {
-	border-radius: 0 5px 5px 5px;
-}
-

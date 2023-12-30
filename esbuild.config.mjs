@@ -3,9 +3,7 @@ import htmlPlugin from 'esbuild-plugin-template'
 import copyPlugin from 'esbuild-copy-static-files'
 import cssModulesPlugin from 'esbuild-css-modules-plugin'
 
-const htmlConfig = [{
-	filename: 'index.html',
-	template(result, initialOptions) {
+function template(result, initialOptions) {
 		const outputs = (Object.keys(result?.metafile?.outputs ?? []));
 		const stripBase = f => f.replace(initialOptions.outdir + sep, '');
 		const stylesheets = outputs.filter(f => f.endsWith('.css')).map(stripBase);
@@ -14,7 +12,7 @@ const htmlConfig = [{
 <html lang="en">
 <head>
 	<meta charset="utf-8">
-	<title>Daw</title>
+	<title>Dawesome</title>
 	${stylesheets.map(f => `<link rel="stylesheet" href="${f}"></script>`).join('\n')}
 </head>
 <body>
@@ -23,7 +21,12 @@ const htmlConfig = [{
 </body>
 </html>`
 	}
-}]
+
+const htmlConfig = [
+	{ filename: 'index.html', template },
+	{ filename: 'settings.html', template },
+	{ filename: 'instruments.html', template },
+];
 
 const outdir = 'dist';
 

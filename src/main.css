@@ -1,9 +1,42 @@
+:root {
+	--color--background-100: 237, 237, 237;
+	--color--background-200: 221, 221, 221;
+	--color--primary-100: 74, 74, 74;
+	--color--primary-200: 245, 245, 245;
+	--color--secondary-100: 54, 54, 54;
+	--color--secondary-200: 181, 181, 181;
+	--color--border-100: 219, 219, 219;
+	--color--link: 50, 115, 220;
+	--color-whiteKey-background: var(--color--background-200);
+	--color-blackKey-background: 50, 50, 50;
+	--color-whiteKey-border: var(--color--secondary-200);
+}
+body[class='dark'] {
+	--color--background-100: 18, 18, 18;
+	--color--background-200: 34, 34, 34;
+	--color--primary-100: 181, 181, 181;
+	--color--primary-200: 10, 10, 10;
+	--color--secondary-100: 201, 201, 201;
+	--color--secondary-200: 74, 74, 74;
+	--color--border-100: 36, 36, 36;
+	--color--link: 205, 140, 35;
+	--color-whiteKey-background: 90, 90, 90;
+}
+
 html, body, div[id='root'] {
 	height: 100%;
-	background: rgb(var(--bg));
-	color: rgb(var(--fg));
 	width: 100%;
 	height: 100vh;
+}
+html,
+body,
+button,
+input,
+select,
+textarea {
+	border: 1px solid rgb(var(--color--border-100));
+	background: rgb(var(--color--background-100));
+	color: rgb(var(--color--primary-100));
 }
 
 div[id='root'] {

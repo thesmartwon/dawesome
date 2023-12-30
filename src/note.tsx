@@ -574,7 +574,7 @@ export interface NoteProps {
 };
 export function Note({ label, value, setValue }: NoteProps) {
 	return (
-		<form>
+		<>
 			<label id={label}>{label}</label>
 			<input
 				class={classes.note}
@@ -582,6 +582,6 @@ export function Note({ label, value, setValue }: NoteProps) {
 				value={value}
 				onChange={ev => setValue(ev.currentTarget.value)}
 			/>
-		</form>
+		</>
 	);
 }

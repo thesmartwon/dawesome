@@ -168,9 +168,11 @@ export function Piano({ instrument, autofocus }: PianoProps) {
 
 	return (
 		<>
-			<Note label="Start" value={from} setValue={setFrom} />
-			<Note label="End" value={to} setValue={setTo} />
-			<MIDISelect />
+			<div>
+				<Note label="Start" value={from} setValue={setFrom} />
+				<Note label="End" value={to} setValue={setTo} />
+				<MIDISelect />
+			</div>
 			<ol
 				ref={list}
 				class={classes.piano}
