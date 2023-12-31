@@ -34,9 +34,19 @@ button,
 input,
 select,
 textarea {
-	border: 1px solid rgb(var(--color--border-100));
 	background: rgb(var(--color--background-100));
 	color: rgb(var(--color--primary-100));
+}
+
+a {
+	color: rgb(var(--color--link));
+}
+
+button,
+input,
+select,
+textarea {
+	border: 1px solid rgb(var(--color--primary-100));
 }
 
 div[id='root'] {
@@ -45,3 +55,6 @@ div[id='root'] {
 	justify-content: center;
 }
 
+.router {
+	flex-grow: 1;
+}

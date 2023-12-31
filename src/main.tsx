@@ -4,7 +4,7 @@ import { Instruments } from './instruments.js';
 import { Router } from 'preact-router';
 import { Settings } from './settings.js';
 import './minireset.css';
-import './main.css';
+import classes from './main.css';
 
 const root = document.getElementById('root');
 if (!root) throw new Error('no root element');
@@ -13,11 +13,13 @@ function App() {
 	return (
 		<>
 			<Nav />
-			<Router>
-				<Instruments path="/" />
-				<Instruments path="/instruments" />
-				<Settings path="/settings" />
-			</Router>
+			<div class={classes.router}>
+				<Router>
+					<Instruments path="/" />
+					<Instruments path="/instruments" />
+					<Settings path="/settings" />
+				</Router>
+			</div>
 		</>
 	)
 }

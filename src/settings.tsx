@@ -12,8 +12,11 @@ dark.subscribe(d => document.body.className = d ? 'dark' : '');
 
 export function Settings() {
 	return (
-		<button onClick={() => dark.value = !dark.value}>
-			toggle dark mode
-		</button>
+		<form onSubmit={ev => ev.preventDefault()}>
+			<label>
+				dark mode
+			</label>
+			<input type="checkbox" checked={dark.value} onClick={() => dark.value = !dark.value} />
+		</form>
 	);
 }

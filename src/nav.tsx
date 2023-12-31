@@ -1,4 +1,5 @@
 import { Link } from 'preact-router';
+import './nav.css';
 
 export function Nav() {
 	return (
