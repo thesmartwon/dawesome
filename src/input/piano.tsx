@@ -5,6 +5,7 @@ import { Instrument } from 'tone/Tone/instrument/Instrument.js';
 import { useEffect, useState, useRef } from 'preact/hooks';
 import { Key } from './key.js';
 import classes from './piano.css';
+import keyClasses from './key.css';
 
 interface PianoProps {
 	instrument: Instrument<any>;
@@ -96,6 +97,7 @@ const blackKeys = [
 export function Piano({ instrument, autofocus }: PianoProps) {
 	const [from, setFrom] = useState<Note>('C3');
 	const [to, setTo] = useState<Note>('C5');
+	// Temp state is used to prevent pressing key twice.
 	const [notes, setNotes] = useState(createNotes(from, to));
 	const [keymap, setKeymap] = useState(createKeymap(from, to));
 	const list = useRef<HTMLOListElement | null>(null);
@@ -104,14 +106,16 @@ export function Piano({ instrument, autofocus }: PianoProps) {
 		if (!(note in notes)) return;
 		instrument.triggerAttack(note, undefined, velocity);
 		notes[note] = true;
-		setNotes({...notes});
+		const key = list.current?.querySelector(`li[data-key="${note}"]`);
+		if (key) key.classList.add(keyClasses.held);
 	}
 
 	function release(note: Note) {
 		if (!(note in notes)) return;
 		instrument.triggerRelease(note);
 		notes[note] = false;
-		setNotes({...notes});
+		const key = list.current?.querySelector(`li[data-key="${note}"]`);
+		if (key) key.classList.remove(keyClasses.held);
 	}
 
 	function playMidiNote(event: Event) {
@@ -153,7 +157,7 @@ export function Piano({ instrument, autofocus }: PianoProps) {
 	}
 
 	useEffect(() => {
-		if (list.current && autofocus) list.current.focus();
+		if (autofocus && list.current) list.current.focus();
 	}, [list.current]);
 
 	useEffect(() => {
@@ -180,13 +184,12 @@ export function Piano({ instrument, autofocus }: PianoProps) {
 				onKeyDown={playNote}
 				onKeyUp={endNote}
 			>
-				{Object.entries(notes).map(([n, held]) => (
+				{Object.keys(notes).map(n =>
 					<Key
 						instrument={instrument}
 						n={n as Note}
 						hotkey={hotkeys[n] || ''}
-						held={held}
-					/>)
+					/>
 				)}
 			</ol>
 		</>

@@ -6,12 +6,11 @@ import classes from './key.css';
 interface KeyProps {
 	n: Note;
 	instrument: Instrument<any>;
-	held: boolean;
 	hotkey: string;
 };
 
-export function Key({ n, instrument, held, hotkey }: KeyProps) {
-	const [isHeld, setIsHeld] = useState(held);
+export function Key({ n, instrument, hotkey }: KeyProps) {
+	const [isHeld, setIsHeld] = useState(false);
 
 	function triggerAttack() {
 		instrument.triggerAttack(n);
@@ -30,9 +29,10 @@ export function Key({ n, instrument, held, hotkey }: KeyProps) {
 					classes.key,
 					isSharp(n) ? classes.black : classes.white,
 					['C', 'F'].includes(n[0]) ? '' : classes.marginLeft,
-					(held || isHeld) ? classes.held : '',
+					isHeld ? classes.held : '',
 				].join(' ')
 			}
+			data-key={n}
 		>
 			<button
 				onMouseDown={triggerAttack}
