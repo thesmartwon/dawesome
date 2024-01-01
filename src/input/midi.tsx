@@ -10,18 +10,17 @@ export interface MIDISelectProps {
 export function MIDISelect({ value, setValue }: MIDISelectProps) {
 	const [inputs, setInputs] = useState<Input[]>([]);
 
-	function loadInputs(setInitial = false) {
+	function loadInputs() {
 		navigator.requestMIDIAccess().then(m => {
 			const inputs: Input[] = [undefined];
 			for (const entry of m.inputs.values()) inputs.push(entry);
 			setInputs(inputs);
-			if (setInitial) setValue(inputs[inputs.length - 1]);
 		});
 	}
-	useEffect(() => loadInputs(true), []);
+	useEffect(loadInputs, []);
 
 	return (
-		<>
+		<div>
 			MIDI Device
 			<select
 				value={value?.id}
@@ -29,13 +28,13 @@ export function MIDISelect({ value, setValue }: MIDISelectProps) {
 					const input = inputs.find(i => i?.id == ev.currentTarget.value);
 					setValue(input);
 				}}
-				onClick={() => loadInputs(false)}
+				onClick={loadInputs}
 			>
 				{inputs.map(input =>
 					<option value={input?.id}>{input ? input.name : 'None'}</option>
 				)}
 			</select>
-		</>
+		</div>
 	);
 }
 

@@ -86,10 +86,6 @@ export function Piano({ onPress, onRelease, autofocus, loading }: PianoProps) {
 
 	return (
 		<>
-			<div>
-				<MidiNoteInput label="Start" value={from} setValue={setFrom} />
-				<MidiNoteInput label="End" value={to} setValue={setTo} />
-			</div>
 			<ol
 				ref={list}
 				class={`${classes.piano} ${loading ? classes.loading : ''}`}
@@ -114,6 +110,10 @@ export function Piano({ onPress, onRelease, autofocus, loading }: PianoProps) {
 					Loading...
 				</div>
 			}
+			<div>
+				<MidiNoteInput label="Start" value={from} setValue={setFrom} />
+				<MidiNoteInput label="End" value={to} setValue={setTo} />
+			</div>
 		</>
 	);
 }

@@ -25,7 +25,7 @@
 .overlay {
 	position: relative;
 	top: calc(-1 * var(--height-whiteKey));
-	height: var(--height-whiteKey);
+	height: 0;
 
 	color: rgb(var(--color--primary-100));
 	font-size: 4rem;

@@ -42,6 +42,7 @@ function PianoPlayer({ autofocus }: PianoPlayerProps) {
 		playing[ev.midi] = true;
 		instrument.start({
 			note: ev.midi,
+			velocity: ev.velocity,
 			onStart() {
 				const key = div.current?.querySelector(`li[data-key="${ev.midi}"]`);
 				if (key) key.classList.add(keyClasses.held);

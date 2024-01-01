@@ -1,7 +1,6 @@
 .samples {
-	--width-button: 4em;
 	display: grid;
-	grid-template-columns: repeat(auto-fit, 12em);
+	grid-template-columns: repeat(auto-fit, minmax(12em, 1fr));
 	grid-gap: 1em;
 }
 
