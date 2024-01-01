@@ -1,54 +1,52 @@
-import { Instrument, Category, InstrumentData } from './instrument.js';
-import { useEffect, useState } from 'preact/hooks';
-import classes from './instruments.css';
+import { Instrument, Category } from './instrument.js';
+import { useState } from 'preact/hooks';
+import { getDrumMachineNames } from 'smplr';
+import classes from './main.css';
 
 type Index = {
-	[k in Category]: {
-		[k2: string]: InstrumentData
-	}
+	[k in Category]: string[];
+};
+
+const index: Index = {
+	'percussion': getDrumMachineNames(),
+	'strings': ['Splendid Grand Piano'],
+	'wind': [],
+	'electronic': [],
 };
 
 export function Instruments() {
-	const [index, setIndex] = useState<Index>({} as Index);
-	const [name, setName] = useState('');
 	const [category, setCategory] = useState<Category>('percussion');
-	const [instrument, setInstrument] = useState<InstrumentData | null>(null);
-
-	useEffect(() => {
-		fetch('/instruments.json')
-			.then(res => res.json())
-			.then(setIndex);
-	}, []);
+	const [name, setName] = useState('');
 
 	return (
-		<div class={classes.instruments}>
-			<div class={classes.selector}>
-				{Object.keys(index).sort().map((k, i) => (
+		<>
+			<div class={classes.sidebar}>
+				{Object.entries(index).map(([k, names], i) =>
 					<details open={i == 0}>
 						<summary>{k}</summary>
 						<ul>
-							{Object.entries(index[k as Category]).map(([k2, v2]) => (
+							{names.map(name =>
 								<li>
 									<button onClick={() => {
 										setCategory(k as Category);
-										setName(k2);
-										setInstrument(v2);
-									}}>{k2}</button>
+										setName(name);
+									}}>
+										{name}
+									</button>
 								</li>
-							))}
+							)}
 						</ul>
 					</details>
-				))}
+				)}
 			</div>
-			<div class={classes.player}>
-				{instrument &&
+			<div class={classes.content}>
+				{name &&
 					<Instrument
-						name={name}
 						category={category}
-						instrument={instrument}
+						name={name}
 						autofocus={true}
 					/>}
 			</div>
-		</div>
+		</>
 	);
 }

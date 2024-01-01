@@ -13,6 +13,7 @@ function template(result, initialOptions) {
 <head>
 	<meta charset="utf-8">
 	<title>Dawesome</title>
+	<link rel="stylesheet" href="minireset.css" />
 	${stylesheets.map(f => `<link rel="stylesheet" href="${f}"></script>`).join('\n')}
 </head>
 <body>

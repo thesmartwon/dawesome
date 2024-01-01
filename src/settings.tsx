@@ -1,4 +1,5 @@
 import { signal } from '@preact/signals';
+import classes from './main.css';
 
 const dark = signal(false);
 if (window.matchMedia) {
@@ -8,7 +9,35 @@ if (window.matchMedia) {
 		match.addEventListener('change', e => dark.value = Boolean(e.matches));
 	}
 }
-dark.subscribe(d => document.body.className = d ? 'dark' : '');
+dark.subscribe(d => document.body.className = d ? classes.dark : '');
+
+// in order of semitones
+// true if black
+export const keys  = signal({
+	'q': true,
+	'a': false,
+	'w': true,
+	's': false,
+	'e': true,
+	'd': false,
+	'r': true,
+	'f': false,
+	't': true,
+	'g': false,
+	'y': true,
+	'h': false,
+	'u': true,
+	'j': false,
+	'i': true,
+	'k': false,
+	'o': true,
+	'l': false,
+	'p': true,
+	';': false,
+	'[': true,
+	"'": false,
+	']': true,
+});
 
 export function Settings() {
 	return (
@@ -16,7 +45,9 @@ export function Settings() {
 			<label>
 				dark mode
 			</label>
-			<input type="checkbox" checked={dark.value} onClick={() => dark.value = !dark.value} />
+			<input type="checkbox" checked={dark.value} onChange={() => {
+				dark.value = !dark.value;
+			}} />
 		</form>
 	);
 }

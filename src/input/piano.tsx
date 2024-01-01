@@ -1,18 +1,19 @@
-import { midi, MIDISelect } from './midi.js';
-import { Midi, Frequency, FrequencyClass } from 'tone';
-import { Note, isBlack } from '../note.js';
-import { Instrument } from 'tone/Tone/instrument/Instrument.js';
+import { MidiNoteInput } from './note-midi.js';
+import { Midi, isBlack, parseNoteNoFail } from '../lib/note.js';
 import { useEffect, useState, useRef } from 'preact/hooks';
-import { Key } from './key.js';
+import { Key, PianoNote } from './key.js';
+import { keys } from '../settings.js';
 import classes from './piano.css';
-import keyClasses from './key.css';
 
 interface PianoProps {
-	instrument: Instrument<any>;
+	onPress: (note: PianoNote) => void;
+	onRelease?: (midi: Midi) => void;
 	autofocus: boolean;
-}
-type Notes = { [key in Note]: boolean };
-type Keymap = { [key: string]: Note };
+	loading: boolean;
+};
+
+type Notes = { [midi: Midi]: boolean };
+type Keymap = { [key: string]: number };
 
 function clamp(n: number, min: number, max: number) {
 	if (n < min) return min;
@@ -20,140 +21,53 @@ function clamp(n: number, min: number, max: number) {
 	return n;
 }
 
-const min = Frequency('C0').toFrequency();
-const max = Frequency('C12').toFrequency();
-
-function isNice(n: FrequencyClass): boolean {
-	const f = n.toFrequency();
-	return f >= min && f <= max;
-}
-
-function createNotes(from: Note, to: Note): Notes {
+function createNotes(from: Midi, to: Midi): Notes {
 	const res = {} as Notes;
-	for (let i = Frequency(from); i < Frequency(to); i = i.transpose(1)) res[i.toNote()] = false;
+	for (let i = from; i < to; i++) res[i] = false;
 	return res;
 }
 
-function createKeymap(from: Note, to: Note): Keymap {
+function createKeymap(from: Midi, to: Midi): Keymap {
 	var res: Keymap = {};
-	var key_i = isBlack(Frequency(from).toNote()) ? 0 : 1;
-	for (
-		let i = Frequency(from);
-		i < Frequency(to);
-		i = i.transpose(1)
-	) {
-		const n = i.toNote();
-		let key = keys[key_i];
-		const cond = isBlack(n) ? (k: string) => !blackKeys.includes(k) : (k: string) => blackKeys.includes(k);
+	var key_i = isBlack(from) ? 0 : 1;
+	type Key = keyof typeof keys.value;
+	const hotkeys = Object.keys(keys.value) as Key[];
+	for (let i = from; i < to; i++) {
+		let key = hotkeys[key_i];
+		const cond = isBlack(i) ? (k: Key) => !keys.value[k] : (k: Key) => keys.value[k];
 		while (key && cond(key)) {
-			key = keys[++key_i];
+			key = hotkeys[++key_i];
 		}
-		if (key) res[key] = n;
-		if (key_i++ > keys.length) break;
+		if (key) res[key] = i;
+		if (key_i++ > hotkeys.length) break;
 	}
 	return res;
 }
 
-const keys = [
-	'q',
-	'a',
-	'w',
-	's',
-	'e',
-	'd',
-	'r',
-	'f',
-	't',
-	'g',
-	'y',
-	'h',
-	'u',
-	'j',
-	'i',
-	'k',
-	'o',
-	'l',
-	'p',
-	';',
-	'[',
-	"'",
-	']',
-];
-const blackKeys = [
-	'q',
-	'w',
-	'e',
-	'r',
-	't',
-	'y',
-	'u',
-	'i',
-	'o',
-	'p',
-	'[',
-	']',
-];
-
-export function Piano({ instrument, autofocus }: PianoProps) {
-	const [from, setFrom] = useState<Note>('C3');
-	const [to, setTo] = useState<Note>('C5');
-	// Temp state is used to prevent pressing key twice.
+export function Piano({ onPress, onRelease, autofocus, loading }: PianoProps) {
+	const [from, setFrom] = useState(parseNoteNoFail('C3').midi as number);
+	const [to, setTo] = useState(parseNoteNoFail('C5').midi as number);
 	const [notes, setNotes] = useState(createNotes(from, to));
 	const [keymap, setKeymap] = useState(createKeymap(from, to));
 	const list = useRef<HTMLOListElement | null>(null);
 
-	function attack(note: Note, velocity: number) {
-		if (!(note in notes)) return;
-		instrument.triggerAttack(note, undefined, velocity);
-		notes[note] = true;
-		const key = list.current?.querySelector(`li[data-key="${note}"]`);
-		if (key) key.classList.add(keyClasses.held);
-	}
-
-	function release(note: Note) {
-		if (!(note in notes)) return;
-		instrument.triggerRelease(note);
-		notes[note] = false;
-		const key = list.current?.querySelector(`li[data-key="${note}"]`);
-		if (key) key.classList.remove(keyClasses.held);
-	}
-
-	function playMidiNote(event: Event) {
-		const ev = event as MIDIMessageEvent;
-		const [pressed, midiNote, velocity] = ev.data;
-		const note: Note = Midi(midiNote).toNote();
-		if (pressed == 144) attack(note, velocity / 100);
-		if (pressed == 128) release(note);
-	}
-	useEffect(() => {
-		const input = midi.value.input;
-		input?.addEventListener('midimessage', playMidiNote);
-		return () => input?.removeEventListener('midimessage', playMidiNote);
-	}, [midi.value]);
-
-	function playNote(event: KeyboardEvent) {
+	function keyDown(event: KeyboardEvent) {
 		let dir = 0;
-		if (event.key == 'z') dir = -1;
-		if (event.key == 'x') dir = 1;
+		if (event.key == 'z') dir = -12;
+		if (event.key == 'x') dir = 12;
 		if (dir !== 0) {
-			const newFrom = Frequency(from).transpose(dir * 12);
-			const newTo = Frequency(to).transpose(dir * 12);
-			if (isNice(newFrom) && isNice(newTo)) {
-				setFrom(newFrom.toNote());
-				setTo(newTo.toNote());
-			}
+			setFrom(clamp(from + dir, 0, 128));
+			setTo(clamp(to+ dir, 0, 128));
 		}
 		if (!(event.key in keymap)) return;
 		const key = event.key as keyof typeof keymap;
-		const note = keymap[key];
-		if (notes[note]) return;
-		attack(note, 1);
+		onPress({ midi: keymap[key], velocity: 100 });
 	}
 
-	function endNote(event: KeyboardEvent) {
+	function keyUp(event: KeyboardEvent) {
 		if (!(event.key in keymap)) return;
 		const key = event.key as keyof typeof keymap;
-		release(keymap[key]);
+		onRelease && onRelease(keymap[key]);
 	}
 
 	useEffect(() => {
@@ -173,25 +87,33 @@ export function Piano({ instrument, autofocus }: PianoProps) {
 	return (
 		<>
 			<div>
-				<Note label="Start" value={from} setValue={setFrom} />
-				<Note label="End" value={to} setValue={setTo} />
-				<MIDISelect />
+				<MidiNoteInput label="Start" value={from} setValue={setFrom} />
+				<MidiNoteInput label="End" value={to} setValue={setTo} />
 			</div>
 			<ol
 				ref={list}
-				class={classes.piano}
+				class={`${classes.piano} ${loading ? classes.loading : ''}`}
 				tabindex={0}
-				onKeyDown={playNote}
-				onKeyUp={endNote}
+				onKeyDown={keyDown}
+				onKeyUp={keyUp}
 			>
 				{Object.keys(notes).map(n =>
 					<Key
-						instrument={instrument}
-						n={n as Note}
+						onPress={onPress}
+						onRelease={onRelease}
+						midi={+n}
 						hotkey={hotkeys[n] || ''}
 					/>
 				)}
 			</ol>
+			{!loading ? null :
+				<div
+					class={classes.overlay}
+					style={{ width: list.current?.scrollWidth }}
+				>
+					Loading...
+				</div>
+			}
 		</>
 	);
 }

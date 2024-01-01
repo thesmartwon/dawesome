@@ -1,35 +1,37 @@
-import { useEffect } from 'preact/hooks';
-import { signal } from '@preact/signals';
+import { useState, useEffect, StateUpdater } from 'preact/hooks';
 
-export const midi = signal({
-	inputs: [] as MIDIInput[],
-	input: undefined as MIDIInput | undefined,
-});
+export type Input = MIDIInput | undefined;
 
-export function MIDISelect() {
+export interface MIDISelectProps {
+	value: Input;
+	setValue: StateUpdater<Input>;
+};
+
+export function MIDISelect({ value, setValue }: MIDISelectProps) {
+	const [inputs, setInputs] = useState<Input[]>([]);
+
 	useEffect(() => {
-		if (midi.value.inputs.length > 0) return;
 		navigator.requestMIDIAccess().then(m => {
-			const inputs: MIDIInput[] = [];
+			const inputs: Input[] = [undefined];
 			for (const entry of m.inputs.values()) inputs.push(entry);
-			midi.value = {
-				inputs,
-				input: inputs[inputs.length - 1],
-			};
+			setInputs(inputs);
+			setValue(inputs[inputs.length - 1]);
 		});
 	}, []);
 
 	return (
 		<>
-			input
-			<select value={midi.value.input?.id} onChange={ev => {
-				const input = midi.value.inputs.find(i => i.id == ev.currentTarget.value);
-				midi.value = { ...midi.value, input };
+			MIDI Device
+			<select value={value?.id} onChange={ev => {
+				const input = inputs.find(i => i?.id == ev.currentTarget.value);
+				setValue(input);
 			}}>
-				{midi.value.inputs.map(i => (
-					<option value={i.id}>{i.name}</option>
-				))}
+				{inputs.map(input =>
+					<option value={input?.id}>{input ? input.name : 'None'}</option>
+				)}
 			</select>
 		</>
 	);
 }
+
+

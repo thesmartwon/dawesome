@@ -1,93 +1,95 @@
-import { JSX } from 'preact';
-import { Sampler } from 'tone';
+import { useRef, useEffect, useState } from 'preact/hooks';
+import { MIDISelect, Input } from './input/midi.js';
 import { Piano } from './input/piano.js';
 import { Percussion } from './input/percussion.js';
-import { Instrument as ToneInstrument } from 'tone/Tone/instrument/Instrument.js';
+import { getCtx } from './lib/ctx.js';
+import { SplendidGrandPiano, CacheStorage } from 'smplr';
+import { Midi } from './lib/note.js';
+import { PianoNote } from './input/key.js';
+import keyClasses from './input/key.css';
 
 // Copy from indexer.js
 export type Category =
 	| 'percussion'
 	| 'strings'
-	| 'woodwinds'
-	| 'brass'
-	| 'keyboards';
-
-export interface InstrumentData {
-	sampled: boolean;
-	files: string[];
-}
+	| 'wind'
+	| 'electronic';
 
 interface InstrumentProps {
 	category: Category;
 	name: string;
-	instrument: InstrumentData;
 	autofocus: boolean;
 }
 
-interface Player {
-	component: JSX.ElementType<any>;
-	toneInstrument: (p: InstrumentProps) => ToneInstrument<any>;
-}
-
-const defaultPlayer: Player = {
-	component: () => <div>need to make player</div>,
-	toneInstrument({ category, name, instrument }: InstrumentProps): ToneInstrument<any> {
-		const baseUrl = `${category}/${name}/`;
-		const urls = instrument.files.reduce((acc, cur) => {
-			acc[cur] = cur;
-			return acc;
-		}, {} as { [k: string]: string });
-		return new Sampler({ urls, baseUrl, attack: 0 });
-	}
+interface PianoPlayerProps {
+	autofocus: boolean;
 };
 
-const players = {
-	'percussion': {
-		component: Percussion,
-		toneInstrument({ category, name, instrument }: InstrumentProps): ToneInstrument<any> {
-			const baseUrl = `${category}/${name}/`;
-			// https://www.midi.org/specifications-old/item/gm-level-1-sound-set
-			const urls = instrument.files.reduce((acc, cur, i) => {
-				acc[i + 1] = cur;
-				return acc;
-			}, {} as { [k: number]: string });
-			return new Sampler({ urls, baseUrl });
-		}
-	},
-	'keyboards': {
-		component: Piano,
-		toneInstrument({ category, name, instrument }: InstrumentProps): ToneInstrument<any> {
-			const baseUrl = `${category}/${name}/`;
-			const urls = instrument.files.reduce((acc, cur) => {
-				acc[cur] = cur;
-				return acc;
-			}, {} as { [k: string]: string });
-			return new Sampler({ urls, baseUrl, attack: 0 });
-		}
-	},
-	'woodwinds': defaultPlayer,
-	'brass': defaultPlayer,
-	'strings': defaultPlayer,
-} as { [k in Category]: Player };
+const storage = new CacheStorage();
 
-export function Instrument(props: InstrumentProps) {
-	const player = players[props.category];
-	const toneInstrument = player?.toneInstrument(props).toDestination() as any;
-	const Component = player?.component;
-	// useEffect(() => instrument.releaseAll, []);
+function PianoPlayer({ autofocus }: PianoPlayerProps) {
+	const [loading, setLoading] = useState(true);
+	const [input, setInput] = useState<Input>();
+	const div = useRef<HTMLDivElement | null>(null);
+
+	const playing = {} as { [midi: Midi]: boolean };
+	const instrument = new SplendidGrandPiano(getCtx(), { storage });
+
+	instrument.load.then(() => setLoading(false));
+
+	function onPress(ev: PianoNote) {
+		if (loading || playing[ev.midi]) return;
+		playing[ev.midi] = true;
+		instrument.start({
+			note: ev.midi,
+			onStart() {
+				const key = div.current?.querySelector(`li[data-key="${ev.midi}"]`);
+				if (key) key.classList.add(keyClasses.held);
+			},
+			time: ev.time,
+	 });
+	}
+
+	function onRelease(midi: Midi) {
+		playing[midi] = false;
+		instrument.stop({ stopId: midi });
+		const key = div.current?.querySelector(`li[data-key="${midi}"]`);
+		if (key) key.classList.remove(keyClasses.held);
+	}
+
+	useEffect(() => {
+		function playMidiNote(event: Event) {
+			const ev = event as MIDIMessageEvent;
+			const [pressed, midiNote, velocity] = ev.data;
+			const note: PianoNote = { midi: midiNote, velocity };
+			if (pressed == 144) onPress(note);
+			if (pressed == 128) onRelease(note.midi);
+		}
+		input?.addEventListener('midimessage', playMidiNote);
+		return () => input?.removeEventListener('midimessage', playMidiNote);
+	}, [input]);
+
+	useEffect(() => () => instrument.stop(), []);
 
 	return (
-		<div>
-			<h1>{props.name} ({props.instrument.files.length} samples)</h1>
-			{Component
-				? <Component
-						name={props.name}
-						category={props.category}
-						instrument={toneInstrument}
-						instrumentData={props.instrument}
-						autofocus={props.autofocus}
-					/>
-				: `no player for category ${props.category}`}
+		<div ref={div}>
+			<MIDISelect value={input} setValue={setInput} />
+			<Piano autofocus={autofocus} onPress={onPress} onRelease={onRelease} loading={loading} />
 		</div>
+	);
+}
+
+function InstrumentPlayer({ category, name, autofocus }: InstrumentProps) {
+	if (category === 'percussion') return <Percussion name={name} />
+
+	return <PianoPlayer autofocus={autofocus} />
+}
+
+export function Instrument(props: InstrumentProps) {
+	return (
+		<>
+			<h1>{props.name}</h1>
+			<InstrumentPlayer {...props} />
+		</>
 	);
 }

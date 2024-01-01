@@ -1,52 +1,50 @@
-import { useState } from 'preact/hooks';
-import { Instrument } from 'tone/Tone/instrument/Instrument.js';
-import { Note, isBlack as isSharp } from '../note.js';
+import { Midi, isBlack } from '../lib/note.js';
 import classes from './key.css';
+import { midiToNoteName } from '@tonaljs/midi';
+
+export type PianoNote = {
+  midi: Midi;
+  velocity: number;
+  time?: number;
+  duration?: number;
+};
 
 interface KeyProps {
-	n: Note;
-	instrument: Instrument<any>;
+	onPress: (note: PianoNote) => void;
+	onRelease?: (midi: Midi) => void;
+	midi: Midi;
 	hotkey: string;
 };
 
-export function Key({ n, instrument, hotkey }: KeyProps) {
-	const [isHeld, setIsHeld] = useState(false);
-
-	function triggerAttack() {
-		instrument.triggerAttack(n);
-		setIsHeld(true);
-	}
-
-	function triggerRelease() {
-		instrument.triggerRelease(n);
-		setIsHeld(false);
-	}
+export function Key({ midi, onPress, onRelease, hotkey }: KeyProps) {
+	const release = () => onRelease && onRelease(midi);
+	const press = () => onPress({ midi, velocity: 100 });
+	const name = midiToNoteName(midi);
 
 	return (
 		<li
 			class={
 				[
 					classes.key,
-					isSharp(n) ? classes.black : classes.white,
-					['C', 'F'].includes(n[0]) ? '' : classes.marginLeft,
-					isHeld ? classes.held : '',
+					isBlack(midi) ? classes.black : classes.white,
+					['C', 'F'].includes(name[0]) ? '' : classes.marginLeft,
 				].join(' ')
 			}
-			data-key={n}
+			data-key={midi}
 		>
 			<button
-				onMouseDown={triggerAttack}
-				onMouseUp={triggerRelease}
-				onMouseLeave={triggerRelease}
+				onMouseDown={press}
+				onMouseUp={release}
+				onMouseLeave={release}
 				onMouseEnter={ev => {
 					if (ev.buttons == 0) return;
-					triggerAttack();
+					press();
 				}}
 				/* playable via hotkeys */
 				tabindex={-1}
 			>
 				{hotkey && <div>{hotkey}</div>}
-				{n}
+				{name}
 			</button>
 		</li>
 	);

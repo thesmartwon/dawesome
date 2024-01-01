@@ -5,17 +5,30 @@
 	--black-width-cm: 1.5;
 	--black-height-cm: 9.2;
 
-	--white-height: 400px;
+	--white-height: var(--height-whiteKey);
 	--white-width: calc(var(--white-height) * var(--white-width-cm) / var(--white-height-cm));
 	--black-height: calc(var(--white-height) * var(--black-height-cm) / var(--white-height-cm));
 	--black-width: calc(var(--white-height) * var(--black-width-cm) / var(--white-height-cm));
 
-	width: 100%;
 	list-style: none;
 	user-select: none;
 	display: flex;
-	overflow-x: auto;
-	overflow-y: hidden;
+	overflow: auto hidden;
 	height: var(--white-height);
 }
 
+.loading {
+	filter: blur(3px);
+	display: inline-flex;
+}
+
+.overlay {
+	position: relative;
+	top: calc(-1 * var(--height-whiteKey));
+	height: var(--height-whiteKey);
+
+	color: rgb(var(--color--primary-100));
+	font-size: 4rem;
+	line-height: var(--height-whiteKey);
+	text-align: center;
+}

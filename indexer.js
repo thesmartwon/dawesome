@@ -8,9 +8,8 @@ const index = {};
 const categories = [
 	'percussion',
 	'strings',
-	'woodwinds',
-	'brass',
-	'keyboards',
+	'wind',
+	'electronic',
 ];
 
 function addInstrument(category, instrument) {

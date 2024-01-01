@@ -1,26 +1,13 @@
-import type { InstrumentData } from '../instrument.js';
-import { Instrument } from 'tone/Tone/instrument/Instrument.js';
-import { useState } from 'preact/hooks';
-import { Midi } from 'tone';
-import { Note } from '../note.js';
+import { useEffect, useState } from 'preact/hooks';
+import { DrumMachine } from 'smplr';
+import { getCtx } from '../lib/ctx.js';
 import classes from './percussion.css';
 
 interface Percussion {
-	instrument: Instrument<any>;
-	instrumentData: InstrumentData;
+	name: string;
 }
 
-interface Sound {
-	name: string,
-	index: number,
-}
-
-interface SoundButton {
- sound: Sound;
- instrument: Instrument<any>;
-}
-
-const categories = {
+const samples = {
 	'kick': 1,
 	'snare': 2,
 	'closed-hat': 3,
@@ -28,66 +15,57 @@ const categories = {
 	'tom': 5,
 } as { [k: string]: number };
 
-function sortCategories(c1: string, c2: string): number {
-	const v1 = categories[c1] ?? Number.POSITIVE_INFINITY;
-	const v2 = categories[c2] ?? Number.POSITIVE_INFINITY;
+function sortSamples(c1: string, c2: string): number {
+	const v1 = samples[c1] ?? Number.POSITIVE_INFINITY;
+	const v2 = samples[c2] ?? Number.POSITIVE_INFINITY;
 	if (v1 > v2) return 1;
 	if (v1 < v2) return -1;
 	return 0;
 }
 
-function SoundButton({ instrument, sound } : SoundButton) {
-	const [held, setHeld] = useState(false);
-
-	function triggerAttack() {
-		const note: Note = Midi(sound.index).toNote();
-		instrument.triggerAttack(note);
-		setHeld(true);
-	}
-
-	function triggerRelease() {
-		const note: Note = Midi(sound.index).toNote();
-		instrument.triggerRelease(note);
-		setHeld(false);
-	}
-
-	return (
-		<button
-			onMouseDown={triggerAttack}
-			onMouseUp={triggerRelease}
-			onMouseLeave={triggerRelease}
-			onMouseEnter={ev => {
-				if (ev.buttons == 0) return;
-				triggerAttack();
-			}}
-			class={held ? classes.active : ''}
-		>
-			{sound.name}
-		</button>
-	);
+function getVariations(drums: DrumMachine, sample: string): string[] {
+	const res = drums.getVariations(sample);
+	if (res.length === 0) res.push(sample);
+	return res;
 }
 
-export function Percussion({ instrument, instrumentData }: Percussion) {
-	const sounds = instrumentData.files.reduce((acc, cur, i) => {
-		const firstDigit = cur.match(/\d/);
-		const suffixStart = firstDigit ? firstDigit.index : cur.indexOf('.');
-		const noSuffix = cur.substring(0, suffixStart);
-		acc[noSuffix] = acc[noSuffix] || [];
-		acc[noSuffix].push({
-			name: cur.substring(0, cur.indexOf('.')),
-			index: i + 1,
-		});
-		return acc;
-	}, {} as { [k: string]: Sound[] });
+export function Percussion({ name }: Percussion) {
+  const [drums, setDrumMachine] = useState<DrumMachine | undefined>(undefined);
+
+  useEffect(() => {
+    new DrumMachine(getCtx(), { instrument: name }).load.then(setDrumMachine);
+  }, [name]);
+
+	useEffect(() => {
+		return () => {
+			if (drums) drums.sampleNames.forEach(sample =>
+				getVariations(drums, sample).forEach(variation => drums.stop({ stopId: variation }))
+			);
+		};
+	}, [drums]);
+
 	return (
-		<ul>
-			{Object.keys(sounds).sort(sortCategories).map(k => (
-				<li class={classes.category}>
-					{sounds[k].map(s => (
-						<SoundButton instrument={instrument} sound={s} />
-					))}
-				</li>
-			))}
+		<ul class={classes.samples}>
+			{!drums
+				? 'loading'
+				: drums.sampleNames.sort(sortSamples).map(sample =>
+					<li class={classes.sample}>
+						<h3>
+							{sample}
+						</h3>
+						<ul>
+							{getVariations(drums, sample).map((variation, i) =>
+								<button
+									class={classes.button}
+									onMouseDown={() => drums.start({ note: variation })}
+								>
+									{i}
+								</button>
+							)}
+						</ul>
+					</li>
+				)
+			}
 		</ul>
 	);
 }

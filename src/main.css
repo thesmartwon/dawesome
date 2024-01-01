@@ -10,8 +10,10 @@
 	--color-whiteKey-background: var(--color--background-200);
 	--color-blackKey-background: 50, 50, 50;
 	--color-whiteKey-border: var(--color--secondary-200);
+	--width-button-border: 1px;
+	--height-whiteKey: 400px;
 }
-body[class='dark'] {
+.dark {
 	--color--background-100: 18, 18, 18;
 	--color--background-200: 34, 34, 34;
 	--color--primary-100: 181, 181, 181;
@@ -46,15 +48,33 @@ button,
 input,
 select,
 textarea {
-	border: 1px solid rgb(var(--color--primary-100));
+	border: var(--width-button-border) solid rgb(var(--color--primary-100));
+}
+
+h1 {
+	font-size: 2rem;
 }
 
 div[id='root'] {
-	display: flex;
-	flex-direction: column;
-	justify-content: center;
+	display: grid;
+	grid-gap: 10px;
+	grid-template-rows: auto 1fr;
+	grid-template-columns: 200px;
+	grid-template-areas:
+		"header header"
+		"sidebar content";
 }
 
-.router {
-	flex-grow: 1;
+.header {
+	grid-area: header;
+}
+
+.sidebar {
+	grid-area: sidebar;
+	overflow: auto;
+}
+
+.content {
+	grid-area: content;
+	overflow: auto;
 }
