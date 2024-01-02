@@ -1,10 +1,13 @@
 import { Link } from 'preact-router';
-import './nav.css';
+import classes from './nav.css';
 
 export function Nav() {
 	return (
 		<nav>
 			<ul>
+				<li>
+					<img class={classes.logo} src="favicon.svg" />
+				</li>
 				<li>
 					<Link href="/instruments">
 						Instruments

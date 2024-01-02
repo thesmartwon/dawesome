@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 75 75">
+<title>Simple Glow</title>
+<g style="overflow:hidden; text-anchor: middle; font-size:50; font-family: Impact, sans-serif">
+<defs>
+<filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+<feGaussianBlur stdDeviation="10 10" result="glow"/>
+<feMerge>
+<feMergeNode in="glow"/>
+<feMergeNode in="glow"/>
+<feMergeNode in="glow"/>
+</feMerge>
+</filter>
+</defs>
+<text style="filter: url(#glow); fill: #0c9" x="35" y="55">:D</text>
+<text x="35" y="55" style="fill: white">:D</text>
+</g>
+</svg>
