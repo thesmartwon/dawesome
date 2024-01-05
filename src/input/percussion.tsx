@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'preact/hooks';
-import { DrumMachine } from 'smplr';
+import { DrumMachine, HttpStorage } from '../smplr';
 import { getCtx } from '../lib/ctx.js';
 import classes from './percussion.css';
 
 interface Percussion {
 	name: string;
+	files: string[];
 }
 
 const samples = {
@@ -29,11 +30,13 @@ function getVariations(drums: DrumMachine, sample: string): string[] {
 	return res;
 }
 
-export function Percussion({ name }: Percussion) {
+export function Percussion({ name, files }: Percussion) {
   const [drums, setDrumMachine] = useState<DrumMachine | undefined>(undefined);
 
   useEffect(() => {
-    new DrumMachine(getCtx(), { instrument: name }).load.then(setDrumMachine);
+		const url = `${SAMPLE_URL}/percussion/${name}`;
+		const storage = HttpStorage;
+    new DrumMachine(getCtx(), { url, files, storage }).load.then(setDrumMachine);
   }, [name]);
 
 	useEffect(() => {

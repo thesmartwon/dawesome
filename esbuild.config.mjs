@@ -35,6 +35,9 @@ const outdir = 'dist';
 export const esbuildConfig = ({ isProd }) => ({
 	entryPoints: ['src/main.tsx'],
 	entryNames: `[dir]/[name]${isProd ? '.[hash]' : ''}`,
+	define: {
+		SAMPLE_URL: JSON.stringify('https://samples.dawesome.io'),
+	},
 	metafile: true,
 	bundle: true,
 	sourcemap: isProd ? 'external' : 'inline',

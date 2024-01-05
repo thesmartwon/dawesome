@@ -3,7 +3,7 @@ import { MIDISelect, Input } from './input/midi.js';
 import { Piano } from './input/piano.js';
 import { Percussion } from './input/percussion.js';
 import { getCtx } from './lib/ctx.js';
-import { SplendidGrandPiano, CacheStorage } from 'smplr';
+import { SplendidGrandPiano, CacheStorage } from './smplr/index.js';
 import { Midi } from './lib/note.js';
 import { PianoNote } from './input/key.js';
 import keyClasses from './input/key.css';
@@ -18,6 +18,7 @@ export type Category =
 interface InstrumentProps {
 	category: Category;
 	name: string;
+	files: string[];
 	autofocus: boolean;
 }
 
@@ -80,8 +81,8 @@ function PianoPlayer({ autofocus }: PianoPlayerProps) {
 	);
 }
 
-function InstrumentPlayer({ category, name, autofocus }: InstrumentProps) {
-	if (category === 'percussion') return <Percussion name={name} />
+function InstrumentPlayer({ category, name, files, autofocus }: InstrumentProps) {
+	if (category === 'percussion') return <Percussion name={name} files={files} />
 
 	return <PianoPlayer autofocus={autofocus} />
 }
