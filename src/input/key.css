@@ -1,4 +1,7 @@
 .key {
+	/* Set in JS based on velocity */
+	--mix-perc: 50%;
+
 	flex-shrink: 0;
 }
 .key > button {
@@ -17,7 +20,8 @@
 
 .white {
 	--background: rgb(var(--color-whiteKey-background));
-	--darkened: color-mix(in srgb, var(--background) 90%, black);
+	--darkened: color-mix(in srgb, var(--background), black var(--mix-perc));
+
 	width: var(--white-width);
 	height: var(--white-height);
 	border: 1px solid rgb(var(--color-whiteKey-border));
@@ -31,7 +35,8 @@
 
 .black {
 	--background: rgb(var(--color-blackKey-background));
-	--darkened: #000;
+	--darkened: color-mix(in srgb, var(--background), black var(--mix-perc));
+
 	background: var(--background);
 	width: var(--black-width);
 	height: var(--black-height);
@@ -39,6 +44,6 @@
 }
 
 .held {
-	background: linear-gradient(to bottom, var(--background) 10%, var(--darkened) 70%);
+	background: linear-gradient(to bottom, var(--background), var(--darkened));
 }
 
