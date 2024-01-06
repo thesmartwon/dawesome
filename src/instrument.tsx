@@ -24,17 +24,18 @@ interface InstrumentProps {
 
 interface PianoPlayerProps {
 	autofocus: boolean;
+	baseUrl: string;
 };
 
 const storage = new CacheStorage();
 
-function PianoPlayer({ autofocus }: PianoPlayerProps) {
+function PianoPlayer({ autofocus, baseUrl }: PianoPlayerProps) {
 	const [loading, setLoading] = useState(true);
 	const [input, setInput] = useState<Input>();
 	const div = useRef<HTMLDivElement | null>(null);
 
 	const playing = {} as { [midi: Midi]: boolean };
-	const instrument = new SplendidGrandPiano(getCtx(), { storage });
+	const instrument = new SplendidGrandPiano(getCtx(), baseUrl, { storage });
 
 	instrument.load.then(() => setLoading(false));
 
@@ -84,7 +85,7 @@ function PianoPlayer({ autofocus }: PianoPlayerProps) {
 function InstrumentPlayer({ category, name, files, autofocus }: InstrumentProps) {
 	if (category === 'percussion') return <Percussion name={name} files={files} />
 
-	return <PianoPlayer autofocus={autofocus} />
+	return <PianoPlayer autofocus={autofocus} baseUrl={`${SAMPLE_URL}/${category}/${name}`} />
 }
 
 export function Instrument(props: InstrumentProps) {

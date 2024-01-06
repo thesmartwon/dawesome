@@ -13,18 +13,15 @@ import { HttpStorage, Storage } from "./storage";
  * Splendid Grand Piano options
  */
 export type SplendidGrandPianoConfig = {
-  baseUrl: string;
   storage: Storage;
   detune: number;
-  velocity: number;
-  decayTime: number;
+  velocity?: number;
+  decayTime?: number;
   notesToLoad?: {
     notes: number[],
     velocityRange: [number, number]
   }
 } & Partial<DefaultPlayerConfig>;
-
-const BASE_URL = `${SAMPLE_URL}/strings/splendid-grand-piano`;
 
 export class SplendidGrandPiano {
   options: Readonly<SplendidGrandPianoConfig>;
@@ -33,11 +30,11 @@ export class SplendidGrandPiano {
 
   constructor(
     public readonly context: AudioContext,
+		baseUrl: string,
     options?: Partial<SplendidGrandPianoConfig>
   ) {
     this.options = Object.assign(
       {
-        baseUrl: BASE_URL,
         storage: HttpStorage,
         detune: 0,
         volume: 100,
@@ -48,7 +45,7 @@ export class SplendidGrandPiano {
     );
     this.player = new DefaultPlayer(context, this.options);
     const loader = splendidGrandPianoLoader(
-      this.options.baseUrl,
+      baseUrl,
       this.options.storage,
       this.options.notesToLoad
     );

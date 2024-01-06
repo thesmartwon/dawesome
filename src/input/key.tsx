@@ -23,7 +23,8 @@ export function Key({ midi, onPress, onRelease, hotkey }: KeyProps) {
 	function press(ev: MouseEvent) {
 		const target = ev.target as HTMLButtonElement;
 		const rect = target.getBoundingClientRect();
-		const velocity = (ev.clientY - rect.top) / rect.height * 100;
+		const percDown = (ev.clientY - rect.top) / rect.height + .1;
+		const velocity = Math.max(percDown, 1) * 100;
 		onPress({ midi, velocity });
 	}
 	const name = midiToNoteName(midi);

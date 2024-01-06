@@ -3,7 +3,7 @@ import { useState, useEffect } from 'preact/hooks';
 import classes from './main.css';
 
 type Index = {
-	[k in Category]: {
+	[k: string]: {
 		[k: string]: string[];
 	}
 };
@@ -11,12 +11,7 @@ type Index = {
 export function Instruments() {
 	const [category, setCategory] = useState<Category>('percussion');
 	const [name, setName] = useState('');
-	const [index, setIndex] = useState<Index>({
-		percussion: {},
-		strings: {},
-		wind: {},
-		electronic: {},
-	});
+	const [index, setIndex] = useState<Index>({});
 
 	useEffect(() => {
 		fetch(SAMPLE_URL + '/index.json').then(res => res.json()).then(i => setIndex(i));
