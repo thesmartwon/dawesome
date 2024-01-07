@@ -24,6 +24,7 @@ export function MIDISelect({ value, setValue }: MIDISelectProps) {
 			MIDI Device
 			<select
 				value={value?.id}
+				name="midi device"
 				onChange={ev => {
 					const input = inputs.find(i => i?.id == ev.currentTarget.value);
 					setValue(input);

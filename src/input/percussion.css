@@ -17,3 +17,17 @@
 	background: rgb(var(--color--primary-100));
 	color: rgb(var(--color--background-100));
 }
+
+.sequencePad {
+	display: grid;
+	grid-template-columns: 100px repeat(8, minmax(2em, 1fr));
+	width: 100%;
+}
+
+.sequencePad > button {
+	height: 64px;
+}
+
+.scheduled {
+	background: yellow;
+}

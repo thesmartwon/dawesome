@@ -1,4 +1,3 @@
-import { useState } from 'preact/hooks';
 import { Midi, isBlack } from '../lib/note.js';
 import classes from './key.css';
 import { midiToNoteName } from '@tonaljs/midi';
@@ -18,8 +17,6 @@ interface KeyProps {
 };
 
 export function Key({ midi, onPress, onRelease, hotkey }: KeyProps) {
-	const [percDown, setPercDown] = useState(0);
-
 	function release() {
 		onRelease && onRelease(midi);
 	};
@@ -28,7 +25,6 @@ export function Key({ midi, onPress, onRelease, hotkey }: KeyProps) {
 		const rect = target.getBoundingClientRect();
 		const percDown = (ev.clientY - rect.top) / rect.height;
 		const velocity = (percDown + .1) * 100;
-		setPercDown(percDown * 100);
 		onPress({ midi, velocity });
 	}
 	const name = midiToNoteName(midi);
@@ -39,11 +35,10 @@ export function Key({ midi, onPress, onRelease, hotkey }: KeyProps) {
 				[
 					classes.key,
 					isBlack(midi) ? classes.black : classes.white,
-					['C', 'F'].includes(name[0]) ? '' : classes.marginLeft,
 				].join(' ')
 			}
-			style={{ '--mix-perc': `${percDown}%` }}
 			data-key={midi}
+			data-key-name={name[0]}
 		>
 			<button
 				onMouseDown={press}
@@ -56,7 +51,7 @@ export function Key({ midi, onPress, onRelease, hotkey }: KeyProps) {
 				/* playable via hotkeys */
 				tabindex={-1}
 			>
-				{hotkey && <div>{hotkey}</div>}
+				<div class={classes.hotkey}>{hotkey || <br />}</div>
 				{name}
 			</button>
 		</li>

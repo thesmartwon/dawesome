@@ -8,16 +8,9 @@ export function Nav() {
 				<li>
 					<img class={classes.logo} src="favicon.svg" />
 				</li>
-				<li>
-					<Link href="/instruments">
-						Instruments
-					</Link>
-				</li>
-				<li>
-					<Link href="/settings">
-						Settings
-					</Link>
-				</li>
+				<li><Link href="/instruments">Instruments</Link> </li>
+				<li><Link href="/sequencer">Sequencer</Link> </li>
+				<li><Link href="/settings">Settings</Link></li>
 			</ul>
 		</nav>
 	);

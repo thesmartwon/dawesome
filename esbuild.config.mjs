@@ -28,6 +28,7 @@ const htmlConfig = [
 	{ filename: 'index.html', template },
 	{ filename: 'settings.html', template },
 	{ filename: 'instruments.html', template },
+	{ filename: 'sequencer.html', template },
 ];
 
 const outdir = 'dist';

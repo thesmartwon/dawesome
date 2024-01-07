@@ -15,11 +15,14 @@ export type Variations = { [k: string]: string[] };
 
 export class DrumMachine {
 	private variations: Variations;
-	private readonly player: DefaultPlayer;
+	player: DefaultPlayer;
 	public readonly load: Promise<this>;
 	public readonly output: OutputChannel;
+	name: string;
+	category = 'percussion';
 
 	public constructor(context: AudioContext, options: DrumMachineOptions) {
+		this.name = options.url.split('/').pop() as string;
 		this.variations = options.files.reduce((acc, cur) => {
 			const split = cur.split('-');
 			const name = split[0];

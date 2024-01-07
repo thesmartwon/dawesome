@@ -49,7 +49,7 @@ export class QueuedPlayer implements InternalPlayer {
   private readonly player: InternalPlayer;
   #config: QueuedPlayerConfig;
   #queue: SortedQueue<SampleStartWithTime>;
-  #intervalId: NodeJS.Timeout | undefined;
+  #intervalId: number | undefined;
 
   public constructor(
     player: InternalPlayer,

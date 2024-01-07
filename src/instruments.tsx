@@ -1,21 +1,15 @@
-import { Instrument, Category } from './instrument.js';
-import { useState, useEffect } from 'preact/hooks';
+import type { Index, Category } from './types.js';
+import { InstrumentPlayer } from './instrument.js';
+import { useState } from 'preact/hooks';
 import classes from './main.css';
 
-type Index = {
-	[k: string]: {
-		[k: string]: string[];
-	}
-};
+export interface InstrumentsProps {
+	index: Index;
+}
 
-export function Instruments() {
+export function Instruments({ index }: InstrumentsProps) {
 	const [category, setCategory] = useState<Category>('percussion');
 	const [name, setName] = useState('');
-	const [index, setIndex] = useState<Index>({});
-
-	useEffect(() => {
-		fetch(SAMPLE_URL + '/index.json').then(res => res.json()).then(i => setIndex(i));
-	}, []);
 
 	return (
 		<>
@@ -39,13 +33,12 @@ export function Instruments() {
 				)}
 			</div>
 			<div class={classes.content}>
-				{name &&
-					<Instrument
-						category={category}
-						name={name}
-						files={index[category][name]}
-						autofocus={true}
-					/>}
+				{name}
+				<InstrumentPlayer
+					category={category}
+					name={name}
+					files={index?.[category]?.[name] ?? []}
+				/>
 			</div>
 		</>
 	);

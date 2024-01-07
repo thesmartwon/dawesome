@@ -23,7 +23,7 @@ export function NoteInput({ label, value, setValue }: NoteInputProps) {
 						setInvalid(true);
 					} else {
 						setInvalid(false);
-						setValue(parsed as TonalNote);
+						setValue(parsed);
 					}
 				}}
 			/>

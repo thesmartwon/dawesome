@@ -12,8 +12,8 @@ if (window.matchMedia) {
 dark.subscribe(d => document.body.className = d ? classes.dark : '');
 
 // in order of semitones
-// true if black
-export const keys  = signal({
+// true if can be black
+export const pianoKeys  = signal({
 	'q': true,
 	'a': false,
 	'w': true,

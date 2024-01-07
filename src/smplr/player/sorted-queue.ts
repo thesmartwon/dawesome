@@ -3,11 +3,11 @@
  * @private
  */
 export class SortedQueue<T> {
-  #items: T[] = [];
+  items: T[] = [];
   constructor(public readonly compare: (a: T, b: T) => number) {}
 
   push(item: T) {
-    const len = this.#items.length;
+    const len = this.items.length;
 
     let left = 0;
     let right = len - 1;
@@ -15,7 +15,7 @@ export class SortedQueue<T> {
 
     while (left <= right) {
       const mid = Math.floor((left + right) / 2);
-      if (this.compare(item, this.#items[mid]) < 0) {
+      if (this.compare(item, this.items[mid]) < 0) {
         index = mid;
         right = mid - 1;
       } else {
@@ -23,28 +23,28 @@ export class SortedQueue<T> {
       }
     }
 
-    this.#items.splice(index, 0, item);
+    this.items.splice(index, 0, item);
   }
 
   pop() {
-    return this.#items.shift();
+    return this.items.shift();
   }
 
   peek(): T | undefined {
-    return this.#items[0];
+    return this.items[0];
   }
 
   removeAll(predicate: (item: T) => boolean) {
-    const len = this.#items.length;
-    this.#items = this.#items.filter((item) => !predicate(item));
-    return this.#items.length !== len;
+    const len = this.items.length;
+    this.items = this.items.filter((item) => !predicate(item));
+    return this.items.length !== len;
   }
 
   clear() {
-    this.#items = [];
+    this.items = [];
   }
 
   size() {
-    return this.#items.length;
+    return this.items.length;
   }
 }

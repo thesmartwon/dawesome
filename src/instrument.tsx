@@ -1,60 +1,60 @@
-import { useRef, useEffect, useState } from 'preact/hooks';
+import { useSignal } from '@preact/signals';
+import { useRef, useEffect, useState, useMemo } from 'preact/hooks';
 import { MIDISelect, Input } from './input/midi.js';
 import { Piano } from './input/piano.js';
 import { Percussion } from './input/percussion.js';
-import { getCtx } from './lib/ctx.js';
-import { SplendidGrandPiano, CacheStorage } from './smplr/index.js';
+import { getCtx, getStorage } from './lib/ctx.js';
+import { SplendidGrandPiano } from './smplr/index.js';
 import { Midi } from './lib/note.js';
 import { PianoNote } from './input/key.js';
 import keyClasses from './input/key.css';
-
-// Copy from indexer.js
-export type Category =
-	| 'percussion'
-	| 'strings'
-	| 'wind'
-	| 'electronic';
+import { midiToNoteName } from '@tonaljs/midi';
+import { Category } from './types.js';
 
 interface InstrumentProps {
 	category: Category;
 	name: string;
 	files: string[];
-	autofocus: boolean;
 }
 
 interface PianoPlayerProps {
-	autofocus: boolean;
 	baseUrl: string;
 };
 
-const storage = new CacheStorage();
-
-function PianoPlayer({ autofocus, baseUrl }: PianoPlayerProps) {
-	const [loading, setLoading] = useState(true);
-	const [input, setInput] = useState<Input>();
+function PianoPlayer({ baseUrl }: PianoPlayerProps) {
 	const div = useRef<HTMLDivElement | null>(null);
+	const [lastPlayed, setLastPlayed] = useState<{ note: number, velocity: number }  | null>(null);
+	const loading = useSignal(true);
+	const [input, setInput] = useState<Input>();
 
-	const playing = {} as { [midi: Midi]: boolean };
-	const instrument = new SplendidGrandPiano(getCtx(), baseUrl, { storage });
-
-	instrument.load.then(() => setLoading(false));
+	const instrument = useMemo(
+		() => {
+			const res = new SplendidGrandPiano(getCtx(), baseUrl, { storage: getStorage() });
+			res.load.then(() => loading.value = false);
+			return res;
+		},
+		[baseUrl]
+	);
 
 	function onPress(ev: PianoNote) {
-		if (loading || playing[ev.midi]) return;
-		playing[ev.midi] = true;
-		instrument.start({
+		const key = div.current?.querySelector(`li[data-key="${ev.midi}"]`) as HTMLLIElement;
+		if (loading.value || (key && key.classList.contains(keyClasses.held))) return;
+		const sample = {
 			note: ev.midi,
 			velocity: ev.velocity,
 			onStart() {
-				const key = div.current?.querySelector(`li[data-key="${ev.midi}"]`);
-				if (key) key.classList.add(keyClasses.held);
+				if (!key) return;
+				key.style.setProperty('--mix-perc', Math.min(ev.velocity, 100) + '%');
+				key.classList.add(keyClasses.held);
 			},
 			time: ev.time,
-	 });
+	 };
+
+		instrument.start(sample);
+		setLastPlayed(sample);
 	}
 
 	function onRelease(midi: Midi) {
-		playing[midi] = false;
 		instrument.stop({ stopId: midi });
 		const key = div.current?.querySelector(`li[data-key="${midi}"]`);
 		if (key) key.classList.remove(keyClasses.held);
@@ -77,22 +77,18 @@ function PianoPlayer({ autofocus, baseUrl }: PianoPlayerProps) {
 	return (
 		<div ref={div}>
 			<MIDISelect value={input} setValue={setInput} />
-			<Piano autofocus={autofocus} onPress={onPress} onRelease={onRelease} loading={loading} />
+			<Piano onPress={onPress} onRelease={onRelease} loading={loading.value} />
+			<div>
+				{lastPlayed && `Note: ${midiToNoteName(+lastPlayed.note)} Velocity: ${Math.round(+lastPlayed.velocity)}`}
+			</div>
 		</div>
 	);
 }
 
-function InstrumentPlayer({ category, name, files, autofocus }: InstrumentProps) {
+export function InstrumentPlayer({ category, name, files }: InstrumentProps) {
+	if (files.length === 0) return null;
+
 	if (category === 'percussion') return <Percussion name={name} files={files} />
 
-	return <PianoPlayer autofocus={autofocus} baseUrl={`${SAMPLE_URL}/${category}/${name}`} />
-}
-
-export function Instrument(props: InstrumentProps) {
-	return (
-		<>
-			<h1>{props.name}</h1>
-			<InstrumentPlayer {...props} />
-		</>
-	);
+	return <PianoPlayer baseUrl={`${SAMPLE_URL}/${category}/${name}`} />
 }

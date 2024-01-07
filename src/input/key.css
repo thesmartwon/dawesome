@@ -9,13 +9,13 @@
 	height: 100%;
 	border: none;
 	background: none;
+	color: white;
 }
 .key.white > button {
 	padding-top: calc(var(--white-height) - 10em);
 }
 .key.black > button {
 	padding-top: calc(var(--black-height) - 10em);
-	color: white;
 }
 
 .white {
@@ -29,7 +29,9 @@
 	background: var(--background);
 }
 
-.black, .marginLeft {
+.black:not(:first-child),
+.key:not([data-key-name="C"]):not([data-key-name="F"]):not(:first-child)
+{
 	margin-left: calc(var(--black-width) / -2);
 }
 
@@ -47,3 +49,6 @@
 	background: linear-gradient(to bottom, var(--background), var(--darkened));
 }
 
+.hotkey {
+	color: rgb(var(--color--primary-100));
+}

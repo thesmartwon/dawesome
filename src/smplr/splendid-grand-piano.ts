@@ -27,12 +27,15 @@ export class SplendidGrandPiano {
   options: Readonly<SplendidGrandPianoConfig>;
   private readonly player: DefaultPlayer;
   public readonly load: Promise<this>;
+	name: string;
+	category = 'strings';
 
   constructor(
     public readonly context: AudioContext,
 		baseUrl: string,
     options?: Partial<SplendidGrandPianoConfig>
   ) {
+		this.name = baseUrl.split('/').pop() as string;
     this.options = Object.assign(
       {
         storage: HttpStorage,
