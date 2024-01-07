@@ -71,7 +71,6 @@ export function Sequencer({ index }: SequencerProps) {
 						<option value={k}>{k}</option>
 					)}
 				</select>
-				<br />
 				<button disabled={!instrument} onClick={addInstrument}>
 					Add
 				</button>

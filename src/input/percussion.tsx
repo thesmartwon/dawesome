@@ -178,12 +178,12 @@ export function PercussionSequencer({ drums }: { drums: DrumMachine }) {
 			.filter(s => drums.sampleNames.includes(s))
 			.sort((a, b) => sortSamples(sequencing, a, b))
 	);
-	const [newVariation, setNewVariation] = useState('');
+	const variations = samples.map(s => getVariations(drums, s)[0]);
+	const [newVariation, setNewVariation] = useState(variations[0]);
 	const beats = [0, 1, 2, 3, 4, 5, 6, 7];
 	const queue = new SortedQueue<Note>((a, b) => a.beat - b.beat);
 	const tempo = 85;
 	const secondsPerBeat = 60.0 / tempo;
-	const variations = samples.map(s => getVariations(drums, s)[0]);
 
 	function scheduleAll() {
 		for (let i = 0; i < queue.size(); i++) {
