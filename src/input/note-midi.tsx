@@ -2,6 +2,7 @@ import { parseNote, Midi } from '../lib/note.js';
 import { useState } from 'preact/hooks';
 import classes from './note.css';
 import { midiToNoteName } from '@tonaljs/midi';
+import { classnames } from '../classnames.js';
 
 export interface MidiNoteProps {
 	label: string;
@@ -16,7 +17,7 @@ export function MidiNoteInput({ label, value, setValue }: MidiNoteProps) {
 		<label>
 			{label}
 			<input
-				class={`${classes.note} ${invalid ? classes.invalid : ''}`}
+				class={classnames(classes.note, invalid && classes.invalid)}
 				name={label}
 				value={parsed.name}
 				onChange={ev => {

@@ -1,7 +1,7 @@
 import type { Index, Category } from './types.js';
 import { InstrumentPlayer } from './instrument.js';
 import { useState } from 'preact/hooks';
-import classes from './main.css';
+import classes from './instruments.css';
 
 export interface InstrumentsProps {
 	index: Index;
@@ -12,7 +12,7 @@ export function Instruments({ index }: InstrumentsProps) {
 	const [name, setName] = useState('');
 
 	return (
-		<>
+		<div class={classes.sidebarLayout}>
 			<div class={classes.sidebar}>
 				{Object.entries(index).map(([category, instruments], i) =>
 					<details open={i == 0}>
@@ -33,13 +33,13 @@ export function Instruments({ index }: InstrumentsProps) {
 				)}
 			</div>
 			<div class={classes.content}>
-				{name}
+				<h1>{name}</h1>
 				<InstrumentPlayer
 					category={category}
 					name={name}
 					files={index?.[category]?.[name] ?? []}
 				/>
 			</div>
-		</>
+		</div>
 	);
 }

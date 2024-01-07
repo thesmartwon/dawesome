@@ -6,6 +6,7 @@ import { Key, PianoNote } from './key.js';
 import { pianoKeys } from '../settings.js';
 import classes from './piano.css';
 import keyClasses from './key.css';
+import { classnames } from '../classnames.js';
 
 interface PianoProps {
 	onPress: (note: PianoNote) => void;
@@ -13,7 +14,6 @@ interface PianoProps {
 	loading: boolean;
 };
 
-type Notes = { [midi: Midi]: boolean };
 type Keymap = { [key: string]: number };
 
 function clamp(n: number, min: number, max: number) {
@@ -22,10 +22,8 @@ function clamp(n: number, min: number, max: number) {
 	return n;
 }
 
-function createNotes(from: Midi, to: Midi): Notes {
-	const res = {} as Notes;
-	for (let i = from; i < to; i++) res[i] = false;
-	return res;
+function range(start: number, stop: number, step: number = 1) {
+  return Array.from({ length: (stop - start) / step + 1 }, (_, index) => start + index * step);
 }
 
 function createKeymap(from: Midi, to: Midi): Keymap {
@@ -47,11 +45,35 @@ function createKeymap(from: Midi, to: Midi): Keymap {
 
 export function Piano({ onPress, onRelease, loading }: PianoProps) {
 	const container = useRef<HTMLDivElement | null>(null);
+	const start = useSignal(48); // C3
+	const end = useSignal(48 + 12); // C4
+	const notes = range(start.value, end.value);
+	const keymap = useComputed(() => createKeymap(start.value, end.value));
 
-	const from = useSignal(48); // C3
-	const to = useSignal(48 + 12); // C4
-	const notes = useComputed(() => createNotes(from.value, to.value));
-	const keymap = useComputed(() => createKeymap(from.value, to.value));
+	function resize() {
+		const cont = container.current;
+		if (!cont) return;
+
+		let whiteKey = cont.querySelector('.' + keyClasses.white)?.getBoundingClientRect().width;
+		let blackKey = cont.querySelector('.' + keyClasses.black)?.getBoundingClientRect().width;
+		const space = cont.getBoundingClientRect().width;
+		if (whiteKey && blackKey) {
+			let used = 0;
+			let i = start.value;
+			while (true) {
+				if (isBlack(i)) used += blackKey / 2;
+				else {
+					if (isBlack(i - 1) && i - 1 >= start.value) used += whiteKey - blackKey / 2;
+					else used += whiteKey;
+				}
+				if (used > space) break;
+				i++;
+			}
+			i--;
+			if (i >= start.value + 12) end.value = i;
+		}
+	}
+	useEffect(() => start.subscribe(resize), []);
 
 	function keyDown(event: KeyboardEvent) {
 		if (event.repeat) return; // Not perfect, will repeat after ANOTHER key is pressed
@@ -59,8 +81,9 @@ export function Piano({ onPress, onRelease, loading }: PianoProps) {
 		if (event.key == 'z') dir = -12;
 		if (event.key == 'x') dir = 12;
 		if (dir !== 0) {
-			from.value = clamp(from.value + dir, 0, 128);
-			to.value = clamp(to.value + dir, 0, 128);
+			start.value = clamp(start.value + dir, 0, 128);
+			end.value = clamp(end.value + dir, 0, 128);
+			resize();
 		}
 		if (!(event.key in keymap.value)) return;
 		const key = event.key as keyof typeof keymap.value;
@@ -80,34 +103,7 @@ export function Piano({ onPress, onRelease, loading }: PianoProps) {
 			document.removeEventListener('keydown', keyDown);
 			document.removeEventListener('keyup', keyUp);
 		};
-	}, []);
-
-
-	function resize() {
-		const cont = container.current;
-		if (!cont) return;
-
-		let whiteKey = cont.querySelector('.' + keyClasses.white)?.getBoundingClientRect().width;
-		let blackKey = cont.querySelector('.' + keyClasses.black)?.getBoundingClientRect().width;
-		const space = cont.getBoundingClientRect().width;
-		if (whiteKey && blackKey) {
-			whiteKey += 1;
-			blackKey += 1;
-			let used = 0;
-			let i = from.value;
-			while (true) {
-				if (isBlack(i)) used += blackKey / 2;
-				else {
-					if (isBlack(i - 1) && i - 1 >= from.value) used += whiteKey - blackKey / 2;
-					else used += whiteKey;
-				}
-				if (used > space) break;
-				i++;
-			}
-			if (i >= from.value + 12) to.value = i;
-		}
-	}
-	useEffect(() => from.subscribe(resize), []);
+	}, [onPress, onRelease]);
 
 	useEffect(() => {
 		if (!container.current) return;
@@ -124,10 +120,10 @@ export function Piano({ onPress, onRelease, loading }: PianoProps) {
 	return (
 		<div ref={container}>
 			<div>
-				<MidiNoteInput label="Start" value={from.value} setValue={v => from.value = v} />
+				<MidiNoteInput label="Start" value={start.value} setValue={v => start.value = v} />
 			</div>
-			<ol class={`${classes.piano} ${loading ? classes.loading : ''}`}>
-				{Object.keys(notes.value).map(n =>
+			<ol class={classnames(classes.piano, loading && classes.loading)}>
+				{notes.map(n =>
 					<Key
 						onPress={onPress}
 						onRelease={onRelease}

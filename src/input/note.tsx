@@ -1,6 +1,7 @@
 import { Note, parseNote } from '../lib/note.js';
 import { useState, StateUpdater } from 'preact/hooks';
 import classes from './note.css';
+import { classnames } from '../classnames.js';
 
 export interface NoteInputProps {
 	label: string;
@@ -14,7 +15,7 @@ export function NoteInput({ label, value, setValue }: NoteInputProps) {
 		<>
 			<label id={label}>{label}</label>
 			<input
-				class={`${classes.note} ${invalid ? classes.invalid : ''}`}
+				class={classnames(classes.note, invalid && classes.invalid)}
 				name={label}
 				value={value.name}
 				onChange={ev => {

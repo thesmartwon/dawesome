@@ -7,6 +7,7 @@ import { Sequencer } from './sequencer.js';
 import { Router } from 'preact-router';
 import { Settings } from './settings.js';
 import classes from './main.css';
+import { Intro } from './intro.js';
 
 const root = document.getElementById('root');
 if (!root) throw new Error('no root element');
@@ -20,15 +21,15 @@ function App() {
 
 	return (
 		<>
-			<div class={classes.header}>
-				<Nav />
+			<Nav class={classes.header} />
+			<div class={classes.page}>
+				<Router>
+					<Intro path="/" />
+					<Instruments index={index} path="/instruments" />
+					<Sequencer index={index} path="/sequencer" />
+					<Settings path="/settings" />
+				</Router>
 			</div>
-			<Router>
-				<Instruments path="/" />
-				<Instruments index={index} path="/instruments" />
-				<Sequencer index={index} path="/sequencer" />
-				<Settings path="/settings" />
-			</Router>
 		</>
 	)
 }

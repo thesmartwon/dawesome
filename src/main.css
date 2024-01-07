@@ -26,9 +26,10 @@
 }
 
 html, body, div[id='root'] {
-	height: 100%;
-	width: 100%;
+	display: flex;
+	flex-direction: column;
 	height: 100vh;
+	width: 100%;
 }
 html,
 body,
@@ -55,26 +56,9 @@ h1 {
 	font-size: 2rem;
 }
 
-div[id='root'] {
-	display: grid;
-	grid-gap: 10px;
-	grid-template-rows: auto 1fr;
-	grid-template-columns: 200px;
-	grid-template-areas:
-		"header header"
-		"sidebar content";
-}
-
-.header {
-	grid-area: header;
-}
-
-.sidebar {
-	grid-area: sidebar;
-	overflow: auto;
-}
-
-.content {
-	grid-area: content;
+.page {
+	/* https://stackoverflow.com/questions/52487743/prevent-flex-item-from-exceeding-parent-height-and-make-scroll-bar-work */
+	flex-grow: 1;
+	min-height: 0;
 	overflow: auto;
 }

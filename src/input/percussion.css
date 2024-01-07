@@ -20,7 +20,7 @@
 
 .sequencePad {
 	display: grid;
-	grid-template-columns: 100px repeat(8, minmax(2em, 1fr));
+	grid-template-columns: 200px repeat(8, minmax(2em, 1fr));
 	width: 100%;
 }
 

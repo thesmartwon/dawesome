@@ -1,0 +1,14 @@
+.sidebar {
+	width: 200px;
+	overflow: auto;
+}
+
+.content {
+	flex: 1;
+	overflow: auto;
+}
+
+.sidebarLayout {
+	display: flex;
+	height: 100%;
+}
