@@ -15,7 +15,7 @@ function InstrumentSequencer({ instrument }: { instrument: Instrument }) {
 
 	return (
 		<div>
-			no instrument sequencer for ${instrument.category}
+			no instrument sequencer for {instrument.category}
 		</div>
 	);
 }
@@ -26,8 +26,8 @@ export interface SequencerProps {
 
 export function Sequencer({ index }: SequencerProps) {
 	const instruments = useSignal<Instrument[]>([]);
-	const [category, setCategory] = useState<Category>('percussion');
-	const [instrument, setInstrument] = useState('');
+	const [category, setCategory] = useState<Category>(Object.keys(index)[0] as Category);
+	const [instrument, setInstrument] = useState(Object.keys(index[category])[0]);
 
 	function addInstrument() {
 		const url = `${SAMPLE_URL}/${category}/${instrument}`;
@@ -56,7 +56,11 @@ export function Sequencer({ index }: SequencerProps) {
 				<select
 					value={category}
 					name="instrument category"
-					onChange={ev => setCategory(ev.currentTarget.value as Category)}
+					onChange={ev => {
+						const newCategory = ev.currentTarget.value as Category;
+						setCategory(newCategory);
+						setInstrument(Object.keys(index[newCategory])[0]);
+					}}
 				>
 					{Object.keys(index).map(k =>
 						<option value={k}>{k}</option>
@@ -79,7 +83,7 @@ export function Sequencer({ index }: SequencerProps) {
 				<ul>
 					{instruments.value.map(i =>
 						<li>
-							{i.name}
+							<h2>{i.name}</h2>
 							<InstrumentSequencer instrument={i} />
 						</li>
 					)}

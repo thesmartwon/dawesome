@@ -47,4 +47,10 @@ export class SortedQueue<T> {
   size() {
     return this.items.length;
   }
+
+	clone(): SortedQueue<T> {
+		const res = new SortedQueue(this.compare);
+		res.items = [...this.items];
+		return res;
+	}
 }

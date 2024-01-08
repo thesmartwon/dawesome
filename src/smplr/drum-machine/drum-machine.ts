@@ -63,7 +63,7 @@ export class DrumMachine {
 		});
 	}
 
-	stop(sample: SampleStop) {
+	stop(sample?: SampleStop) {
 		return this.player.stop(sample);
 	}
 }

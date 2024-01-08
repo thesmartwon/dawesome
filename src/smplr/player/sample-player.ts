@@ -45,7 +45,8 @@ export class SamplePlayer implements InternalPlayer {
     const buffer =
       (sample.name && this.buffers[sample.name]) || this.buffers[sample.note];
     if (!buffer) {
-      console.warn(`Sample not found: '${sample.note}'`);
+			if (sample.note === "silence") sample.onStart?.(sample);
+			else console.warn(`Sample not found: '${sample.note}'`);
       return () => undefined;
     }
 

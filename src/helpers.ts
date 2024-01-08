@@ -23,3 +23,8 @@ export function classnames(...args: any): string {
 
 	return classes.join(' ');
 }
+
+export function range(start: number, stop: number, step: number = 1) {
+  return Array.from({ length: (stop - start) / step + 1 }, (_, index) => start + index * step);
+}
+

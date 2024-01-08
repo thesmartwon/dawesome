@@ -6,7 +6,7 @@ import { Key, PianoNote } from './key.js';
 import { pianoKeys } from '../settings.js';
 import classes from './piano.css';
 import keyClasses from './key.css';
-import { classnames } from '../classnames.js';
+import { classnames, range } from '../helpers.js';
 
 interface PianoProps {
 	onPress: (note: PianoNote) => void;
@@ -20,10 +20,6 @@ function clamp(n: number, min: number, max: number) {
 	if (n < min) return min;
 	if (n > max) return max;
 	return n;
-}
-
-function range(start: number, stop: number, step: number = 1) {
-  return Array.from({ length: (stop - start) / step + 1 }, (_, index) => start + index * step);
 }
 
 function createKeymap(from: Midi, to: Midi): Keymap {

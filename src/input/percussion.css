@@ -19,15 +19,44 @@
 }
 
 .sequencePad {
-	display: grid;
-	grid-template-columns: 200px repeat(8, minmax(2em, 1fr));
+	--grid-height: 64px;
+
+	display: flex;
 	width: 100%;
 }
 
-.sequencePad > button {
-	height: 64px;
+.seqenceHeadings {
+	display: flex;
+	flex-direction: column;
+}
+
+.seqenceHeadings > button {
+	height: var(--grid-height);
+}
+
+.beats {
+	--n-columns: 8;
+
+	display: grid;
+	grid-template-columns: repeat(var(--n-columns), minmax(2em, 1fr));
+	width: 100%;
+	overflow: auto;
+}
+
+.beats > button {
+	height: var(--grid-height);
+	border-color: rgb(var(--color--border-100));
+}
+
+.beats > button.barStart {
+	border-left-color: rgb(var(--color--primary-100));
 }
 
 .scheduled {
-	background: yellow;
+	background: rgb(var(--color--secondary-100));
 }
+
+.loop {
+	background: green;
+}
+

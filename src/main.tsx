@@ -13,7 +13,7 @@ const root = document.getElementById('root');
 if (!root) throw new Error('no root element');
 
 function App() {
-	const [index, setIndex] = useState<Index>({});
+	const [index, setIndex] = useState<Index | null>(null);
 
 	useEffect(() => {
 		fetch(SAMPLE_URL + '/index.json').then(res => res.json()).then(i => setIndex(i));
@@ -25,8 +25,12 @@ function App() {
 			<div class={classes.page}>
 				<Router>
 					<Intro path="/" />
-					<Instruments index={index} path="/instruments" />
-					<Sequencer index={index} path="/sequencer" />
+					<div path="/instruments">
+						{index ? <Instruments index={index} /> : 'loading index..'}
+					</div>
+					<div path="/sequencer">
+						{index ? <Sequencer index={index} /> : 'loading index...'}
+					</div>
 					<Settings path="/settings" />
 				</Router>
 			</div>

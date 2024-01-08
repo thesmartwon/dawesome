@@ -1,8 +1,12 @@
-import { useEffect, useState } from 'preact/hooks';
+import { useEffect, useMemo, useState } from 'preact/hooks';
+import { useSignal } from '@preact/signals';
 import { DrumMachine } from '../smplr';
 import { getCtx, getStorage } from '../lib/ctx.js';
 import classes from './percussion.css';
 import { SortedQueue } from '../smplr/player/sorted-queue.js';
+import { QueuedPlayer } from '../smplr/player/queued-player.js';
+import { classnames, range } from '../helpers.js';
+import { Play, Stop, Refresh } from '../icons/index.js';
 
 interface Percussion {
 	name: string;
@@ -63,12 +67,12 @@ export function Percussion({ name, files }: Percussion) {
 							{sample}
 						</h3>
 						<ul>
-							{getVariations(drums, sample).map((variation, i) =>
+							{getVariations(drums, sample).map(variation =>
 								<button
 									class={classes.button}
 									onMouseDown={() => drums.start({ note: variation })}
 								>
-									{i}
+									{variation.replace(sample, '').replace(/^-/, '')}
 								</button>
 							)}
 						</ul>
@@ -85,27 +89,25 @@ interface SampleSequencerProps {
 	variation: string;
 	beats: number[];
 	queue: SortedQueue<Note>;
+	timeSigDenom: number;
 }
 
-function SampleSequencer({ drums, variation, beats, queue }: SampleSequencerProps) {
+function SampleSequencer({ drums, variation, beats, queue, timeSigDenom }: SampleSequencerProps) {
 	const note = variation;
+
 	return (
 		<>
-			<button onMouseDown={() => drums.start({ note })}>
-				{variation}
-			</button>
 			{beats.map(beat =>
 				<button onMouseDown={ev => {
-					drums.start({ note });
 					const target = ev.currentTarget;
 					if (target.classList.contains(classes.scheduled)) {
 						queue.removeAll(i => i.note === variation && i.beat === beat);
 					} else {
+						drums.start({ note });
 						queue.push({ note, beat });
 					}
 					target.classList.toggle(classes.scheduled);
-				}}>
-					{beat}
+				}} class={classnames(beat % timeSigDenom === 0 && classes.barStart)} >
 				</button>
 			)}
 		</>
@@ -146,7 +148,11 @@ function SampleSelect({ drums, value, onSelect }: SampleSelectProps) {
 				onChange={ev => {
 					const newSample = ev.currentTarget.value;
 					setSample(newSample);
-					if (getVariations(drums, newSample).length <= 1) {
+					if (getVariations(drums, newSample).length > 1) {
+						const firstVariation = getVariations(drums, newSample)[0];
+						setVariation(firstVariation);
+						drums.start({ note: firstVariation });
+					} else {
 						drums.start({ note: newSample });
 						onSelect(newSample);
 					}
@@ -180,33 +186,97 @@ export function PercussionSequencer({ drums }: { drums: DrumMachine }) {
 	);
 	const variations = samples.map(s => getVariations(drums, s)[0]);
 	const [newVariation, setNewVariation] = useState(variations[0]);
-	const beats = [0, 1, 2, 3, 4, 5, 6, 7];
-	const queue = new SortedQueue<Note>((a, b) => a.beat - b.beat);
-	const tempo = 85;
-	const secondsPerBeat = 60.0 / tempo;
+	const beats = range(0, 31);
+	const queue = useMemo(() => new SortedQueue<Note>((a, b) => a.beat - b.beat), []);
+	const [playing, setPlaying] = useState(false);
+	const tempo = useSignal(60);
+	const beatNum = useSignal(0);
+	const ctx = drums.player.context;
+	const start = useSignal(ctx.currentTime);
+	const player = drums.player.player as QueuedPlayer;
+	const timeSigDenom = useSignal(4);
+	const loop = useSignal(true);
+
+	// player.time.subscribe((t: number) => {});
+
+	function beatTime(beat: number) {
+		return start.value + beat * 60 / tempo.value / timeSigDenom.value;
+	}
 
 	function scheduleAll() {
+		let lastBeat = -1;
 		for (let i = 0; i < queue.size(); i++) {
 			const note = queue.items[i];
-			drums.player.start({
-				note: note.note,
-				time: getCtx().currentTime + note.beat * secondsPerBeat / 4,
-			});
+			let onStart = undefined;
+			if (note.beat != lastBeat) {
+				onStart = () => beatNum.value = note.beat;
+				lastBeat = note.beat;
+			}
+			drums.player.start({ note: note.note, time: beatTime(note.beat), onStart });
 		}
+		drums.player.start({
+			note: 'silence',
+			time: beatTime(beats.length + 1),
+			onStart: () => {
+				setPlaying(false);
+				if (loop.value) onPlay();
+			}
+		});
+	}
+
+	function onPlay() {
+		start.value = getCtx().currentTime;
+		scheduleAll();
+		setPlaying(true);
+	}
+
+	function onStop() {
+		drums.stop();
+		setPlaying(false);
 	}
 
 	return (
 		<>
-			<button onClick={scheduleAll}>
-				play
+			<label>
+				BPM
+				<input
+					type="range"
+					min={30}
+					max={300}
+					value={tempo.value}
+					onInput={ev => {
+						const newTempo = +ev.currentTarget.value;
+						player.queue.items.forEach(i => {
+							i.time = start.value + (i.time - start.value) * tempo.value / newTempo / timeSigDenom.value;
+						});
+						tempo.value = newTempo;
+					}}
+				/>
+			 {tempo.value}
+			</label>
+			<button onClick={() => playing ? onStop() : onPlay()}>
+				{playing ? <Stop / > : <Play />}
 			</button>
+			<button onClick={() => loop.value = !loop.value} class={classnames(loop.value && classes.loop)}>
+				<Refresh />
+			</button>
+			<span>Beat: {beatNum.value}</span>
 			<div class={classes.sequencePad}>
-				{variations.map(v =>
-					<SampleSequencer drums={drums} variation={v} beats={beats} queue={queue} />
-				)}
+				<div class={classes.seqenceHeadings}>
+					{variations.map(v =>
+						<button onMouseDown={() => drums.start({ note: v })}>
+							{v}
+						</button>
+					)}
+				</div>
+				<div class={classes.beats} style={{ '--n-columns': beats.length }}>
+					{variations.map(v =>
+						<SampleSequencer drums={drums} variation={v} beats={beats} queue={queue} timeSigDenom={timeSigDenom.value} />
+					)}
+				</div>
 			</div>
 			<div>
-				<SampleSelect drums={drums} value={newVariation} onSelect={v => setNewVariation(v)}/>
+				<SampleSelect drums={drums} value={newVariation} onSelect={setNewVariation}/>
 				<button onClick={() => setSamples([...samples, newVariation])}>
 					Add
 				</button>

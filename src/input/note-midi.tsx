@@ -2,7 +2,7 @@ import { parseNote, Midi } from '../lib/note.js';
 import { useState } from 'preact/hooks';
 import classes from './note.css';
 import { midiToNoteName } from '@tonaljs/midi';
-import { classnames } from '../classnames.js';
+import { classnames } from '../helpers.js';
 
 export interface MidiNoteProps {
 	label: string;

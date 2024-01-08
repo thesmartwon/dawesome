@@ -14,7 +14,7 @@ export type DefaultPlayerConfig = ChannelConfig &
  */
 export class DefaultPlayer implements InternalPlayer {
   public readonly output: OutputChannel;
-  private readonly player: InternalPlayer;
+  readonly player: InternalPlayer;
 
   constructor(
     public readonly context: BaseAudioContext,

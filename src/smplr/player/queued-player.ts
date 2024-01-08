@@ -1,5 +1,6 @@
 import { SortedQueue } from "./sorted-queue";
 import { InternalPlayer, SampleStart, SampleStop } from "./types";
+import { Signal, signal } from '@preact/signals-core';
 
 type SampleStartWithTime = SampleStart & { time: number };
 
@@ -48,7 +49,8 @@ function getConfig(options: Partial<QueuedPlayerConfig>) {
 export class QueuedPlayer implements InternalPlayer {
   private readonly player: InternalPlayer;
   #config: QueuedPlayerConfig;
-  #queue: SortedQueue<SampleStartWithTime>;
+  queue: SortedQueue<SampleStartWithTime>;
+	time: Signal<number>;
   #intervalId: number | undefined;
 
   public constructor(
@@ -56,8 +58,9 @@ export class QueuedPlayer implements InternalPlayer {
     options: Partial<QueuedPlayerConfig> = {}
   ) {
     this.#config = getConfig(options);
+		this.time = signal(player.context.currentTime);
 
-    this.#queue = new SortedQueue<SampleStartWithTime>(
+    this.queue = new SortedQueue<SampleStartWithTime>(
       (a, b) => a.time - b.time
     );
     this.player = player;
@@ -86,27 +89,28 @@ export class QueuedPlayer implements InternalPlayer {
     if (startAt < now + lookAhead) {
       return this.player.start(sample);
     }
-    this.#queue.push({ ...sample, time: startAt });
+    this.queue.push({ ...sample, time: startAt });
 
     if (!this.#intervalId) {
       this.#intervalId = setInterval(() => {
         const nextTick = context.currentTime + lookAhead;
-        while (this.#queue.size() && this.#queue.peek()!.time <= nextTick) {
-          const sample = this.#queue.pop();
+        while (this.queue.size() && this.queue.peek()!.time <= nextTick) {
+          const sample = this.queue.pop();
           if (sample) {
             this.player.start(sample);
           }
         }
-        if (!this.#queue.size()) {
+        if (!this.queue.size()) {
           clearInterval(this.#intervalId!);
           this.#intervalId = undefined;
         }
+				this.time.value = context.currentTime;
       }, this.#config.scheduleIntervalMs);
     }
 
     return (time?: number) => {
       if (!time || time < startAt) {
-        if (!this.#queue.removeAll((item) => item === sample)) {
+        if (!this.queue.removeAll((item) => item === sample)) {
           this.player.stop({ ...sample, time });
         }
       } else {
@@ -119,20 +123,20 @@ export class QueuedPlayer implements InternalPlayer {
     this.player.stop(sample);
 
     if (!sample) {
-      this.#queue.clear();
+      this.queue.clear();
       return;
     }
 
     const time = sample?.time ?? 0;
     const stopId = sample?.stopId;
     if (stopId) {
-      this.#queue.removeAll((item) =>
+      this.queue.removeAll((item) =>
         item.time >= time && item.stopId
           ? item.stopId === stopId
           : item.note === stopId
       );
     } else {
-      this.#queue.removeAll((item) => item.time >= time);
+      this.queue.removeAll((item) => item.time >= time);
     }
   }
 

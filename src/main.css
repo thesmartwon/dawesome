@@ -52,8 +52,15 @@ textarea {
 	border: var(--width-button-border) solid rgb(var(--color--primary-100));
 }
 
+button:disabled {
+	background: rgb(var(--color--secondary-200));
+}
+
 h1 {
 	font-size: 2rem;
+}
+h2 {
+	font-size: 1.8rem;
 }
 
 .page {
