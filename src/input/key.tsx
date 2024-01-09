@@ -5,7 +5,6 @@ import classes from './key.css';
 export type PianoNote = {
   midi: Midi;
   velocity: number;
-  time?: number;
   duration?: number;
 };
 
@@ -43,7 +42,10 @@ export function Key({ midi, onPress, onRelease, hotkey }: KeyProps) {
 			<button
 				onMouseDown={press}
 				onMouseUp={release}
-				onMouseLeave={release}
+				onMouseLeave={ev => {
+					if (ev.buttons == 0) return;
+					release();
+				}}
 				onMouseEnter={ev => {
 					if (ev.buttons == 0) return;
 					press(ev);

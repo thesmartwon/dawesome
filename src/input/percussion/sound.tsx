@@ -20,14 +20,21 @@ export const standardKit = {
 	'tom-high': 6,
 	'hat-open': 7,
 	'hat-closed': 8,
+	'ride': 9,
+	'crash': 10,
 } as { [k: string]: number };
 
 export const nonStandardKit = {
 	// Over 20 is non-standard
-	'conga-high': 21,
-	'conga': 21,
-	'conga-mid': 21,
 	'conga-low': 20,
+	'conga-mid': 21,
+	'conga': 21,
+	'conga-high': 22,
+
+	'rim-low': 23,
+	'rim-mid': 24,
+	'rim': 24,
+	'rim-high': 25,
 } as { [k: string]: number };
 
 export function sortSamples(c1: string, c2: string): number {

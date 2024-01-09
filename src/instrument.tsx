@@ -47,8 +47,7 @@ function PianoPlayer({ baseUrl }: PianoPlayerProps) {
 				key.style.setProperty('--mix-perc', Math.min(ev.velocity, 100) + '%');
 				key.classList.add(keyClasses.held);
 			},
-			time: ev.time,
-	 };
+		};
 
 		instrument.start(sample);
 		setLastPlayed(sample);
