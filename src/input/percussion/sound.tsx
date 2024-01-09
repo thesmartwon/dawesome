@@ -9,23 +9,30 @@ interface PercussionProps {
 	files: string[];
 }
 
-const commonSamples = {
+// https://en.wikipedia.org/wiki/Drum_kit
+// https://en.wikipedia.org/wiki/Percussion_notation
+export const standardKit = {
 	'kick': 1,
-	'snare': 2,
-	'closed-hat': 3,
-	'open-hat': 4,
-	'tom': 5,
+	'tom-low': 2,
+	'snare': 3,
+	'rim': 4,
+	'tom-mid': 5,
 	'tom-high': 6,
-	'tom-mid': 7,
-	'tom-low': 8,
-	'conga-high': 9,
-	'conga-mid': 10,
-	'conga-low': 11,
+	'hat-open': 7,
+	'hat-closed': 8,
 } as { [k: string]: number };
 
-export function sortSamples(ctx: { [k: string]: number }, c1: string, c2: string): number {
-	const v1 = ctx[c1] ?? Number.POSITIVE_INFINITY;
-	const v2 = ctx[c2] ?? Number.POSITIVE_INFINITY;
+export const nonStandardKit = {
+	// Over 20 is non-standard
+	'conga-high': 21,
+	'conga': 21,
+	'conga-mid': 21,
+	'conga-low': 20,
+} as { [k: string]: number };
+
+export function sortSamples(c1: string, c2: string): number {
+	const v1 = standardKit[c1] ?? nonStandardKit[c1] ?? Number.POSITIVE_INFINITY;
+	const v2 = standardKit[c2] ?? nonStandardKit[c2] ?? Number.POSITIVE_INFINITY;
 	if (v1 > v2) return 1;
 	if (v1 < v2) return -1;
 	return 0;
@@ -51,7 +58,7 @@ export function Percussion({ name, files }: PercussionProps) {
 		<ul class={classes.samples}>
 			{!drums
 				? 'loading'
-				: drums.samples().sort((a, b) => sortSamples(commonSamples, a, b)).map(sample =>
+				: drums.samples().sort(sortSamples).map(sample =>
 					<li class={classes.sample}>
 						<h3>
 							{sample}

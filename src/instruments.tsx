@@ -40,12 +40,31 @@ export function Instruments({ index, userIndex }: InstrumentsProps) {
 					<summary>User instruments</summary>
 					<ul>
 						{Object.keys(userIndex.value).map(name =>
-							<li>
+							<li class={classes.userInstrument}>
 								<button onClick={() => setUserName(name)}>
 									{name}
 								</button>
+								<button onClick={() => {
+									delete userIndex.value[name];
+									userIndex.value = { ...userIndex.value };
+									if (userName === name) setUserName(Object.keys(userIndex.value)[0]);
+								}}>
+									x
+								</button>
 							</li>
 						)}
+						<li>
+							<button onClick={() => {
+								let newName = '';
+								for (let i = 1; newName in userIndex.value || newName.length === 0; i++) {
+									newName = 'Custom percussion ' + i;
+								}
+								userIndex.value = { ...userIndex.value, [newName]: {} };
+								setUserName(newName);
+							}}>
+								New
+							</button>
+						</li>
 					</ul>
 				</details>
 			</div>

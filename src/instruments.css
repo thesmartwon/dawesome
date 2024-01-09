@@ -24,3 +24,12 @@
 	display: flex;
 	height: 100%;
 }
+
+.userInstrument {
+	display: flex;
+}
+
+.userInstrument  > button:first-child {
+	flex: 1;
+	text-align: left;
+}

@@ -1,20 +1,24 @@
 import { DefaultPlayer } from "./player/default-player";
-import { AudioBuffersLoader, loadAudioBuffer } from "./player/load-audio";
+import { loadAudioBuffer } from "./player/load-audio";
 import { SampleStart, SampleStop } from "./player/types";
 import { midiVelToGain } from "./player/volume";
 import { HttpStorage, Storage } from "./storage";
 import { SampleOptions } from './player/types.js';
 
+export type SampleState = 'loading' | 'success' | Error;
 export type Sample = {
 	name: string;
 	url: string;
+	state: SampleState;
+	onStateChange?: (newState: SampleState) => void;
 	buffer?: AudioBuffer;
 } & SampleOptions;
-export type Samples = Record<string | number, SampleWithBuffer>;
+export type Samples = Record<string | number, Sample>;
 
-export type SampleWithBuffer = Sample & {
-	buffer: AudioBuffer;
-};
+function setSampleState(sample: Sample, state: SampleState) {
+	sample.state = state;
+	sample.onStateChange && sample.onStateChange(sample.state);
+}
 
 export type SamplerConfig = {
   storage: Storage;
@@ -58,24 +62,47 @@ export class Sampler {
 		this.name = name;
 		this.samples = this.options.samples;
     this.player = new DefaultPlayer(context, this.options);
-    const loader = createAudioBuffersLoader(this.options.samples, this.options.storage);
-    this.load = loader(context, this.player.buffers).then(() => this);
+		this.load = Promise.all([
+      Object.values(this.options.samples).map(s => this.loadSample(s))
+    ]).then(() => this);
   }
 
 	id() {
 		return this.name;
 	}
 
-	rename(oldName: string | number, newName: string | number) {
-		this.samples[oldName] = this.samples[newName];
+	rename(oldName: string, newName: string) {
+		this.samples[newName] = this.samples[oldName];
+		this.samples[newName].name = newName;
 		delete this.samples[oldName];
 		this.player.buffers[newName] = this.player.buffers[oldName];
 		delete this.player.buffers[oldName];
 	}
 
-	add(sample: SampleWithBuffer) {
-		this.samples[sample.name] = sample;
+	async loadSample(sample: Sample) {
+		if (!(sample.buffer instanceof AudioBuffer)) {
+			setSampleState(sample, 'loading');
+			try {
+				sample.buffer = await loadAudioBuffer(this.player.context, sample.url, this.options.storage);
+				setSampleState(sample, 'success');
+			} catch (err: any) {
+				setSampleState(sample, err as Error);
+			}
+		}
 		this.player.buffers[sample.name] = sample.buffer;
+	}
+
+	async add(sample: Sample) {
+		if (sample.name === '') sample.name = 'new sample';
+		if (sample.name in this.samples) {
+			let newName = '';
+			for (let i = 2; newName in this.samples || newName.length === 0; i++) {
+				newName = `${sample.name} ${i}`;
+			}
+			sample.name = newName;
+		}
+		this.samples[sample.name] = sample;
+		await this.loadSample(sample);
 	}
 
 	delete(name: string | number) {
@@ -100,21 +127,3 @@ export class Sampler {
   }
 }
 
-function createAudioBuffersLoader(
-  source: Record<string | number, SampleWithBuffer>,
-  storage: Storage
-): AudioBuffersLoader {
-  return async (context, buffers) => {
-    await Promise.all([
-      Object.keys(source).map(async (key) => {
-        const value = source[key];
-        if (value.buffer instanceof AudioBuffer) {
-          buffers[key] = value.buffer;
-        } else if (typeof value.url === "string") {
-          const buffer = await loadAudioBuffer(context, value.url, storage);
-          if (buffer) buffers[key] = buffer;
-        }
-      }),
-    ]);
-  };
-}

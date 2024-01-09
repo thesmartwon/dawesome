@@ -14,24 +14,13 @@ export async function loadAudioBuffer(
   context: BaseAudioContext,
   url: string,
   storage: Storage
-): Promise<AudioBuffer | undefined> {
+): Promise<AudioBuffer> {
   url = url.replace(/#/g, "%23").replace(/([^:]\/)\/+/g, "$1");
   const response = await storage.fetch(url);
-  if (response.status !== 200) {
-    console.warn(
-      "Error loading buffer. Invalid status: ",
-      response.status,
-      url
-    );
-    return;
-  }
-  try {
-    const audioData = await response.arrayBuffer();
-    const buffer = await context.decodeAudioData(audioData);
-    return buffer;
-  } catch (error) {
-    console.warn("Error loading buffer", error, url);
-  }
+  if (response.status !== 200) throw new Error('Response code ' + response.status);
+	const audioData = await response.arrayBuffer();
+	const buffer = await context.decodeAudioData(audioData);
+	return buffer;
 }
 
 export function findFirstSupportedFormat(formats: string[]): string | null {

@@ -5,6 +5,7 @@ import { QueuedPlayer } from '../../smplr/player/queued-player.js';
 import { classnames, range } from '../../helpers.js';
 import { Play, Stop, Refresh } from '../../icons/index.js';
 import { Sequence } from '../../sequence.js';
+import { sortSamples } from './sound.js';
 import classes from './sequence.css';
 
 interface BeatProps {
@@ -49,7 +50,7 @@ export interface PercussionProps {
 }
 
 export function Percussion({ drums, sequence, onChange }: PercussionProps) {
-	const samples = Object.keys(drums.samples);
+	const samples = Object.keys(drums.samples).sort(sortSamples);
 	const beats = range(0, 31);
 	const [playing, setPlaying] = useState(false);
 	const tempo = useSignal(60);

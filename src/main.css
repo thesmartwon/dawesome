@@ -7,6 +7,8 @@
 	--color--secondary-200: 181, 181, 181;
 	--color--border-100: 219, 219, 219;
 	--color--link: 50, 115, 220;
+	--color--error-100: 198, 43, 43;
+	--color--warning-100: 229, 212, 43;
 	--color-whiteKey-background: var(--color--background-200);
 	--color-blackKey-background: 50, 50, 50;
 	--color-whiteKey-border: var(--color--secondary-200);
@@ -22,6 +24,8 @@
 	--color--secondary-200: 74, 74, 74;
 	--color--border-100: 36, 36, 36;
 	--color--link: 205, 140, 35;
+	--color--warning-100: 229, 212, 87;
+	--color--error-100: 135, 39, 39;
 	--color-whiteKey-background: 90, 90, 90;
 }
 
@@ -55,17 +59,14 @@ textarea {
 button:disabled {
 	background: rgb(var(--color--secondary-200));
 }
-button:active:not([tabindex="-1"]) {
+button:active:not([tabindex="-1"]):not(:disabled):not(:has(button:active)) {
 	background: rgb(var(--color--primary-100));
 	color: rgb(var(--color--background-100));
 }
 
-h1 {
-	font-size: 2rem;
-}
-h2 {
-	font-size: 1.8rem;
-}
+h1 { font-size: 2rem; }
+h2 { font-size: 1.8rem; }
+h3 { font-size: 1.3rem; }
 
 .page {
 	/* https://stackoverflow.com/questions/52487743/prevent-flex-item-from-exceeding-parent-height-and-make-scroll-bar-work */
