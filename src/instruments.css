@@ -1,10 +1,22 @@
 .sidebar {
-	width: 200px;
 	overflow: auto;
+}
+
+.left {
+	width: 200px;
+}
+
+.right {
+	width: 400px;
 }
 
 .content {
 	flex: 1;
+	display: flex;
+	flex-direction: column;
+}
+
+.overflow {
 	overflow: auto;
 }
 

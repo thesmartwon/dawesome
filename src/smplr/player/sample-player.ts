@@ -45,13 +45,14 @@ export class SamplePlayer implements InternalPlayer {
     const buffer =
       (sample.name && this.buffers[sample.name]) || this.buffers[sample.note];
     if (!buffer) {
-			if (sample.note === "silence") sample.onStart?.(sample);
-			else console.warn(`Sample not found: '${sample.note}'`);
-      return () => undefined;
+			if (sample.note !== "silence") {
+				console.warn(`Sample not found: '${sample.note}'`);
+				return () => undefined;
+			}
     }
 
     const source = context.createBufferSource();
-    source.buffer = buffer;
+    source.buffer = buffer ?? null;
 
     // Seems that detune is not implemented in Safari (and therefore, in standardized-audio-context)
     const cents = sample.detune ?? this.options.detune ?? 0;
@@ -75,7 +76,7 @@ export class SamplePlayer implements InternalPlayer {
     volume.gain.value = this.#config.velocityToGain(velocity);
 
     const loop = sample.loop ?? this.options.loop;
-    if (loop) {
+    if (loop && buffer) {
       source.loop = true;
       source.loopStart = sample.loopStart ?? 0;
       source.loopEnd = sample.loopEnd ?? buffer.duration;
@@ -128,10 +129,8 @@ export class SamplePlayer implements InternalPlayer {
     const startAt = Math.max(sample.time ?? 0, context.currentTime);
     source.start(sample.time);
 
-    let duration = sample.duration ?? buffer.duration;
-    if (typeof sample.duration == "number") {
-      stop(startAt + duration);
-    }
+    let duration = sample.duration ?? buffer?.duration ?? 0;
+		stop(startAt + duration);
 
     return stop;
   }

@@ -1,8 +1,10 @@
+import { shallowEqualObjects, validObjectValue } from "../../helpers";
+
 /**
  * A sorted items that uses binary search to insert items in sorted order.
  * @private
  */
-export class SortedQueue<T> {
+export class SortedQueue<T extends validObjectValue> {
   items: T[] = [];
   constructor(public readonly compare: (a: T, b: T) => number) {}
 
@@ -52,5 +54,9 @@ export class SortedQueue<T> {
 		const res = new SortedQueue(this.compare);
 		res.items = [...this.items];
 		return res;
+	}
+
+	contains(v: T): boolean {
+		return this.items.some(i => shallowEqualObjects(i, v));
 	}
 }

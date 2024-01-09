@@ -1,6 +1,5 @@
 import { SortedQueue } from "./sorted-queue";
 import { InternalPlayer, SampleStart, SampleStop } from "./types";
-import { Signal, signal } from '@preact/signals-core';
 
 type SampleStartWithTime = SampleStart & { time: number };
 
@@ -50,7 +49,6 @@ export class QueuedPlayer implements InternalPlayer {
   private readonly player: InternalPlayer;
   #config: QueuedPlayerConfig;
   queue: SortedQueue<SampleStartWithTime>;
-	time: Signal<number>;
   #intervalId: number | undefined;
 
   public constructor(
@@ -58,7 +56,6 @@ export class QueuedPlayer implements InternalPlayer {
     options: Partial<QueuedPlayerConfig> = {}
   ) {
     this.#config = getConfig(options);
-		this.time = signal(player.context.currentTime);
 
     this.queue = new SortedQueue<SampleStartWithTime>(
       (a, b) => a.time - b.time
@@ -104,7 +101,6 @@ export class QueuedPlayer implements InternalPlayer {
           clearInterval(this.#intervalId!);
           this.#intervalId = undefined;
         }
-				this.time.value = context.currentTime;
       }, this.#config.scheduleIntervalMs);
     }
 

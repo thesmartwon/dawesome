@@ -1,6 +1,6 @@
 import { Midi, isBlack } from '../lib/note.js';
-import classes from './key.css';
 import { midiToNoteName } from '@tonaljs/midi';
+import classes from './key.css';
 
 export type PianoNote = {
   midi: Midi;

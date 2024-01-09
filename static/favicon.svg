@@ -8,6 +8,7 @@
 <feMergeNode in="glow"/>
 <feMergeNode in="glow"/>
 <feMergeNode in="glow"/>
+<feMergeNode in="glow"/>
 </feMerge>
 </filter>
 </defs>

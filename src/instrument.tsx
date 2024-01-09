@@ -2,7 +2,7 @@ import { useSignal } from '@preact/signals';
 import { useRef, useEffect, useState, useMemo } from 'preact/hooks';
 import { MIDISelect, Input } from './input/midi.js';
 import { Piano } from './input/piano.js';
-import { Percussion } from './input/percussion.js';
+import { Percussion } from './input/percussion/sound.js';
 import { getCtx, getStorage } from './lib/ctx.js';
 import { SplendidGrandPiano } from './smplr/index.js';
 import { Midi } from './lib/note.js';

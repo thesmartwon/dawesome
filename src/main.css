@@ -55,6 +55,10 @@ textarea {
 button:disabled {
 	background: rgb(var(--color--secondary-200));
 }
+button:active:not([tabindex="-1"]) {
+	background: rgb(var(--color--primary-100));
+	color: rgb(var(--color--background-100));
+}
 
 h1 {
 	font-size: 2rem;

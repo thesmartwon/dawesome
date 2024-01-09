@@ -1,8 +1,11 @@
+import { Link } from 'preact-router';
+
 export function Intro() {
 	return (
 		<div>
-			Welcome to Dawesome! Find the right sound in the instruments tab, and then compose them in
-			the sequencer.
+			Welcome to Dawesome!
+			Play and create instruments in the <Link href="/instruments">instruments tab</Link> and
+			compose them in the <Link href="/sequencer">sequencer tab</Link>.
 		</div>
 	);
 }

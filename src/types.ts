@@ -1,3 +1,5 @@
+import type { Samples } from './smplr/sampler.js'
+
 export type Category =
 	| 'percussion'
 	| 'strings'
@@ -5,7 +7,16 @@ export type Category =
 	| 'electronic';
 
 export type Index = {
-	[k: string]: {
-		[k: string]: string[];
+	[category: string]: {
+		[sample: string]: string[];
 	}
 };
+
+export type UserIndex = {
+	[name: string]: Samples
+};
+
+declare global {
+	interface Window { dragBuffer: AudioBuffer; }
+}
+

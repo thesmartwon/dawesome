@@ -19,7 +19,6 @@ export class DrumMachine {
 	public readonly load: Promise<this>;
 	public readonly output: OutputChannel;
 	name: string;
-	category = 'percussion';
 
 	public constructor(context: AudioContext, options: DrumMachineOptions) {
 		this.name = options.url.split('/').pop() as string;
@@ -47,12 +46,18 @@ export class DrumMachine {
 		).then(() => this);
 	}
 
-	get sampleNames(): string[] {
+	id() {
+		return `percussion/${this.name}`;
+	}
+
+	samples(): string[] {
 		return Object.keys(this.variations);
 	}
 
-	getVariations(name: string): string[] {
-		return this.variations[name] ?? [];
+	sampleVariations(name: string): string[] {
+		const res = this.variations[name] ?? [];
+		if (res.length === 0 && name in this.variations) res.push(name);
+		return res;
 	}
 
 	start(sample: SampleStart) {

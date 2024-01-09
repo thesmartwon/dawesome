@@ -28,7 +28,6 @@ export class SplendidGrandPiano {
   private readonly player: DefaultPlayer;
   public readonly load: Promise<this>;
 	name: string;
-	category = 'strings';
 
   constructor(
     public readonly context: AudioContext,
@@ -54,6 +53,10 @@ export class SplendidGrandPiano {
     );
     this.load = loader(context, this.player.buffers).then(() => this);
   }
+
+	id() {
+		return `strings/${this.name}`;
+	}
 
   get output() {
     return this.player.output;
@@ -81,12 +84,13 @@ export class SplendidGrandPiano {
     const midi = toMidi(sample.note);
     if (!midi) return;
 
-    const vel = sample.velocity ?? this.options.velocity;
-    const layerIdx = LAYERS.findIndex(
-      (layer) => vel >= layer.vel_range[0] && vel <= layer.vel_range[1]
-    );
+    const vel = sample.velocity ?? this.options.velocity ?? 100;
+    const layerIdx = LAYERS.findLastIndex(layer => vel >= layer.vel_start);
     const layer = LAYERS[layerIdx];
-    if (!layer) return;
+    if (!layer) {
+			console.warn('No layer for velocity', vel);
+			return;
+		}
 
     return findNearestMidiInLayer(layer.name, midi, this.player.buffers);
   }
@@ -149,7 +153,7 @@ function splendidGrandPianoLoader(
 export const LAYERS = [
   {
     name: "PPP",
-    vel_range: [1, 40],
+    vel_start: 0,
     cutoff: 1000,
     samples: [
       [23, "PP-B-1"],
@@ -217,7 +221,7 @@ export const LAYERS = [
   },
   {
     name: "PP",
-    vel_range: [41, 67],
+    vel_start: 40,
     samples: [
       [23, "PP-B-1"],
       [27, "PP-D#0"],
@@ -284,7 +288,7 @@ export const LAYERS = [
   },
   {
     name: "MP",
-    vel_range: [68, 84],
+    vel_start: 67,
     samples: [
       [23, "Mp-B-1"],
       [27, "Mp-D#0"],
@@ -352,7 +356,7 @@ export const LAYERS = [
   },
   {
     name: "MF",
-    vel_range: [85, 100],
+    vel_start: 84,
     samples: [
       [23, "Mf-B-1"],
       [27, "Mf-D#0"],
@@ -420,7 +424,7 @@ export const LAYERS = [
   },
   {
     name: "FF",
-    vel_range: [101, 127],
+    vel_start: 100,
     samples: [
       [23, "FF-B-1"],
       [27, "FF-D#0"],

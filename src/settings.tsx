@@ -1,7 +1,7 @@
 import { signal } from '@preact/signals';
 import classes from './main.css';
 
-const dark = signal(false);
+export const dark = signal(false);
 if (window.matchMedia) {
 	const match = window.matchMedia('(prefers-color-scheme: dark)');
 	if (match) {
@@ -10,6 +10,8 @@ if (window.matchMedia) {
 	}
 }
 dark.subscribe(d => document.body.className = d ? classes.dark : '');
+
+export const sampleUrl = signal(SAMPLE_URL);
 
 // in order of semitones
 // true if can be black
@@ -43,11 +45,16 @@ export function Settings() {
 	return (
 		<form onSubmit={ev => ev.preventDefault()}>
 			<label>
-				dark mode
+				sample url
+				<input value={sampleUrl.value} onChange={ev => sampleUrl.value = ev.currentTarget.value} />
 			</label>
-			<input type="checkbox" checked={dark.value} onChange={() => {
-				dark.value = !dark.value;
-			}} />
+			<br />
+			<label>
+				dark mode
+				<input type="checkbox" checked={dark.value} onChange={() => {
+					dark.value = !dark.value;
+				}} />
+			</label>
 		</form>
 	);
 }

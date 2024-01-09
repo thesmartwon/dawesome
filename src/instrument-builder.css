@@ -1,0 +1,7 @@
+.editor {
+	margin-top: 10px;
+}
+
+.editor > label {
+	display: block;
+}
