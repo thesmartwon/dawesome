@@ -130,7 +130,9 @@ export class SamplePlayer implements InternalPlayer {
     source.start(sample.time);
 
     let duration = sample.duration ?? buffer?.duration ?? 0;
-		stop(startAt + duration);
+    if (typeof sample.duration == "number") {
+      stop(startAt + duration);
+    }
 
     return stop;
   }
