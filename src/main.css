@@ -9,6 +9,7 @@
 	--color--link: 50, 115, 220;
 	--color--error-100: 198, 43, 43;
 	--color--warning-100: 229, 212, 43;
+	--color--success-100: 43, 229, 43;
 	--color-whiteKey-background: var(--color--background-200);
 	--color-blackKey-background: 50, 50, 50;
 	--color-whiteKey-border: var(--color--secondary-200);
@@ -26,6 +27,7 @@
 	--color--link: 205, 140, 35;
 	--color--warning-100: 229, 212, 87;
 	--color--error-100: 135, 39, 39;
+	--color--success-100: 38, 63, 28;
 	--color-whiteKey-background: 90, 90, 90;
 }
 
@@ -59,7 +61,7 @@ textarea {
 button:disabled {
 	background: rgb(var(--color--secondary-200));
 }
-button:active:not([tabindex="-1"]):not(:disabled):not(:has(button:active)) {
+button:active:not([tabindex="-1"]):not(:disabled):not(:has(button:active)):not(:has(input:active)):not(:has([contenteditable="true"]:active)) {
 	background: rgb(var(--color--primary-100));
 	color: rgb(var(--color--background-100));
 }

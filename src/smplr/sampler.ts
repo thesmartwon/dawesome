@@ -21,16 +21,16 @@ function setSampleState(sample: Sample, state: SampleState) {
 }
 
 export type SamplerConfig = {
-  storage: Storage;
-  detune: number;
-  volume: number;
-  velocity: number;
-  decayTime?: number;
-  lpfCutoffHz?: number;
-  destination: AudioNode;
+	storage: Storage;
+	detune: number;
+	volume: number;
+	velocity: number;
+	decayTime?: number;
+	lpfCutoffHz?: number;
+	destination: AudioNode;
 
-  samples: Samples,
-  volumeToGain: (volume: number) => number;
+	samples: Samples,
+	volumeToGain: (volume: number) => number;
 };
 
 /**
@@ -40,32 +40,32 @@ export type SamplerConfig = {
  */
 export class Sampler {
 	name: string;
-  options: SamplerConfig;
+	options: SamplerConfig;
 	samples: Samples;
-  readonly player: DefaultPlayer;
-  readonly load: Promise<this>;
+	readonly player: DefaultPlayer;
+	readonly load: Promise<this>;
 
-  public constructor(
-    public readonly context: AudioContext,
+	public constructor(
+		public readonly context: AudioContext,
 		name: string,
-    options: Partial<SamplerConfig> = {}
-  ) {
-    this.options = {
-      destination: options.destination ?? context.destination,
-      detune: 0,
-      volume: options.volume ?? 100,
-      velocity: options.velocity ?? 100,
-      samples: options.samples ?? {},
+		options: Partial<SamplerConfig> = {}
+	) {
+		this.options = {
+			destination: options.destination ?? context.destination,
+			detune: 0,
+			volume: options.volume ?? 100,
+			velocity: options.velocity ?? 100,
+			samples: options.samples ?? {},
 			storage: options.storage ?? HttpStorage,
-      volumeToGain: options.volumeToGain ?? midiVelToGain,
-    };
+			volumeToGain: options.volumeToGain ?? midiVelToGain,
+		};
 		this.name = name;
 		this.samples = this.options.samples;
-    this.player = new DefaultPlayer(context, this.options);
+		this.player = new DefaultPlayer(context, this.options);
 		this.load = Promise.all([
-      Object.values(this.options.samples).map(s => this.loadSample(s))
-    ]).then(() => this);
-  }
+			Object.values(this.options.samples).map(s => this.loadSample(s))
+		]).then(() => this);
+	}
 
 	id() {
 		return this.name;
@@ -95,9 +95,13 @@ export class Sampler {
 	async add(sample: Sample) {
 		if (sample.name === '') sample.name = 'new sample';
 		if (sample.name in this.samples) {
-			let newName = '';
-			for (let i = 2; newName in this.samples || newName.length === 0; i++) {
-				newName = `${sample.name} ${i}`;
+			const match = sample.name.match(/\d+$/);
+			const namePart = sample.name.substring(0, match?.index ?? sample.name.length);
+			const numberPart = match ? +match[0] + 1 : 2;
+			console.log('match', namePart, numberPart);
+			let newName = `${namePart} ${numberPart}`;
+			for (let i = numberPart; newName in this.samples; i++) {
+				newName = `${namePart} ${i}`;
 			}
 			sample.name = newName;
 		}
@@ -110,20 +114,20 @@ export class Sampler {
 		delete this.player.buffers[name];
 	}
 
-  start(sample: SampleStart) {
-    return this.player.start({ ...this.samples[sample.note], ...sample });
-  }
+	start(sample: SampleStart) {
+		return this.player.start({ ...this.samples[sample.note], ...sample });
+	}
 
-  stop(sample?: SampleStop | string | number) {
-    return this.player.stop(
-      typeof sample === "object"
-        ? sample
-        : sample === undefined ? undefined : { stopId: sample }
-    );
-  }
+	stop(sample?: SampleStop | string | number) {
+		return this.player.stop(
+			typeof sample === "object"
+				? sample
+				: sample === undefined ? undefined : { stopId: sample }
+		);
+	}
 
-  disconnect() {
-    return this.player.disconnect();
-  }
+	disconnect() {
+		return this.player.disconnect();
+	}
 }
 

@@ -86,6 +86,7 @@ export function Percussion({ name, files }: PercussionProps) {
 										// Saves serializing or fetching + converting
 										window.dragBuffer = drums.player.buffers[note];
 									}}
+									onDragEnd={() => window.dragBuffer = undefined}
 								>
 									{note.replace(sample, '').replace(/^-/, '')}
 								</button>

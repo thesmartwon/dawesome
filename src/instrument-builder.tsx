@@ -8,6 +8,7 @@ import { getCtx } from './lib/ctx.js';
 import { ExternalLink } from './icons/index.js';
 import { standardKit } from './input/percussion/sound.js'
 import { classnames } from './helpers.js';
+import { Header } from './input/header.js';
 
 function isError(e: any) {
  return e && e.stack && e.message;
@@ -17,20 +18,22 @@ interface SampleEditorProps {
 	sampler: Sampler;
 	sample: Sample;
 	onChange: () => void;
-	editableName?: boolean;
+	editableName: boolean;
 }
 function SampleEditor({ sampler, sample, onChange, editableName }: SampleEditorProps) {
+	const [name, setName] = useState(sample.name);
 	const [state, setState] = useState(sample.state);
 	useEffect(() => {
+		setState(sample.state);
 		sample.onStateChange = setState;
-	}, []);
+	}, [sample]);
 
-	function rename(ev: JSX.TargetedFocusEvent<HTMLHeadingElement>) {
-		const newName = ev.currentTarget.innerText;
+	function rename(ev: any, newName: string) {
 		if (sampler.samples[newName]) {
 			ev.currentTarget.innerText = sample.name;
 			return;
 		}
+		setName(newName);
 		sampler.rename(sample.name, newName);
 		onChange();
 	}
@@ -44,15 +47,26 @@ function SampleEditor({ sampler, sample, onChange, editableName }: SampleEditorP
 			class={classes.editor}
 			disabled={sample.state !== 'success'}
 			onMouseDown={() => sampler.start({ note: sample.name })}
+			draggable
+			onDragStart={ev => {
+				if (!ev.dataTransfer) return;
+				ev.dataTransfer.dropEffect = "copy";
+				const uri = sample.url;
+				ev.dataTransfer.setData('text/uri-list', uri);
+				ev.dataTransfer.setData('text/plain', uri);
+				ev.dataTransfer.setData('name', sample.name);
+				// Saves serializing or fetching + converting
+				window.dragBuffer = sample.buffer;
+			}}
+			onDragEnd={() => window.dragBuffer = undefined}
 		>
-			<div class={classes.editorTitle}>
-				<h3
-					contenteditable={editableName}
+			<div class={classes.titleRow}>
+				<Header is="h3"
+					value={name}
+					onChange={rename}
+					contentEditable={editableName}
 					onMouseDown={editableName ? stopPropagation : () => {}}
-					onBlur={rename}
-				>
-					{sample.name}
-				</h3>
+				/>
 				<button
 					onMouseDown={stopPropagation}
 					onClick={() => {
@@ -77,7 +91,6 @@ function SampleEditor({ sampler, sample, onChange, editableName }: SampleEditorP
 						onChange();
 					}}
 					onBlur={() => {
-						console.log('onBlur');
 						delete sample.buffer;
 						sampler.loadSample(sample);
 					}}
@@ -90,10 +103,16 @@ function SampleEditor({ sampler, sample, onChange, editableName }: SampleEditorP
 	);
 }
 
-function getSample(d: DataTransfer): Sample {
+function isSample(d: DataTransfer): boolean {
+	return d.types.includes('text/uri-list') || window.dragBuffer instanceof AudioBuffer;
+}
+
+function getSample(d: DataTransfer | null): Sample | undefined {
+	if (!d) return;
 	const url = d.getData('text/uri-list');
 	const name = d.getData('name');
 	const buffer = window.dragBuffer;
+	if (!url && !buffer) return undefined;
 	return { url, name, state: buffer ? 'success' : 'loading', buffer };
 }
 
@@ -104,17 +123,30 @@ interface DropZoneProps {
 	useDragName?: boolean;
 	editableName?: boolean;
 }
-function DropZone({ sampler, sampleName, userIndex, useDragName = false, editableName = true }: DropZoneProps) {
+function DropZone({
+	sampler,
+	sampleName,
+	userIndex,
+	useDragName = false,
+	editableName = true
+}: DropZoneProps) {
 	const samples = sampler.samples;
 
 	return (
 		<li
 			class={classes.dropZone}
-			onDragOver={ev => ev.preventDefault()}
+			onDragOver={ev => {
+				ev.preventDefault();
+				let className = classes.willReject;
+				if (ev.dataTransfer && isSample(ev.dataTransfer)) className = classes.willAccept;
+				ev.currentTarget.classList.add(className);
+			}}
+			onDragLeave={ev => ev.currentTarget.classList.remove(classes.willAccept, classes.willReject)}
 			onDrop={ev => {
 				ev.preventDefault();
-				if (!ev.dataTransfer) return;
+				ev.currentTarget.classList.remove(classes.willAccept, classes.willReject);
 				const sample = getSample(ev.dataTransfer);
+				if (!sample) return;
 				if (!useDragName) sample.name = sampleName;
 				sampler.add(sample);
 				userIndex.value = { ...userIndex.value, [sampler.name]: sampler.samples };
@@ -151,8 +183,7 @@ export function InstrumentBuilder({ name: inName, userIndex }: InstrumentBuilder
 		);
 	}
 
-	function onBlur(ev: JSX.TargetedFocusEvent<HTMLHeadingElement>) {
-		const newName = ev.currentTarget.innerText;
+	function onNewName(ev: any, newName: string) {
 		if (userIndex.value[newName]) {
 			ev.currentTarget.innerText = name;
 			return;
@@ -165,9 +196,7 @@ export function InstrumentBuilder({ name: inName, userIndex }: InstrumentBuilder
 
 	return (
 		<div class={classes.builder}>
-			<h2 class={classes.h2} contenteditable onBlur={onBlur}>
-				{name}
-			</h2>
+			<Header value={name} onChange={onNewName} />
 			<ol class={classes.standardKit}>
 				{Object.keys(standardKit).map(k =>
 					<DropZone userIndex={userIndex} sampler={sampler} sampleName={k} editableName={false} />
@@ -177,7 +206,7 @@ export function InstrumentBuilder({ name: inName, userIndex }: InstrumentBuilder
 				{Object.values(samples).filter(s => !(s.name in standardKit)).map(s =>
 					<DropZone userIndex={userIndex} sampler={sampler} sampleName={s.name} />
 				)}
-				<DropZone userIndex={userIndex} sampler={sampler} sampleName="misc" useDragName />
+				<DropZone userIndex={userIndex} sampler={sampler} sampleName="+" useDragName />
 			</ul>
 		</div>
 	);
