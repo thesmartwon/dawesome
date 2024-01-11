@@ -9,13 +9,13 @@ export class Sequence extends SortedQueue<Note> {
 		super((a, b) => a.beat - b.beat);
 	}
 
-	serialize(): string {
-		return JSON.stringify(this.items);
+	serialize(): Note[] {
+		return this.items;
 	}
 
-	static deserialize(json: string): Sequence {
+	static deserialize(items: Note[]): Sequence {
 		const res = new Sequence();
-		res.items = JSON.parse(json);
+		res.items = items;
 		return res;
 	}
 

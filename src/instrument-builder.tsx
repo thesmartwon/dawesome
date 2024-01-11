@@ -1,26 +1,38 @@
-import type { UserIndex } from './types.js';
 import { JSX } from 'preact';
-import { Signal } from '@preact/signals';
-import { useState, useMemo, useEffect } from 'preact/hooks';
-import { Sampler, Sample } from './smplr/sampler.js';
+import { useState, useEffect, useMemo } from 'preact/hooks';
+import { Sampler, Sample, Samples } from './smplr/sampler.js';
 import classes from './instrument-builder.css';
 import { getCtx } from './lib/ctx.js';
 import { ExternalLink } from './icons/index.js';
 import { standardKit } from './input/percussion/sound.js'
 import { classnames } from './helpers.js';
 import { Header } from './input/header.js';
+import {
+	addInstrumentSample,
+	getInstrumentSamples,
+	Instrument,
+	InstrumentSample,
+	putInstrument,
+	eventEmitter,
+	deleteInstrumentSample,
+} from './db.js';
+import { useSignal } from '@preact/signals';
 
 function isError(e: any) {
  return e && e.stack && e.message;
 };
 
+declare global {
+	interface Window { dragBuffer?: AudioBuffer; }
+}
+
 interface SampleEditorProps {
 	sampler: Sampler;
 	sample: Sample;
-	onChange: () => void;
+	instrumentId: number;
 	editableName: boolean;
 }
-function SampleEditor({ sampler, sample, onChange, editableName }: SampleEditorProps) {
+function SampleEditor({ sampler, sample, instrumentId, editableName }: SampleEditorProps) {
 	const [name, setName] = useState(sample.name);
 	const [state, setState] = useState(sample.state);
 	useEffect(() => {
@@ -35,7 +47,6 @@ function SampleEditor({ sampler, sample, onChange, editableName }: SampleEditorP
 		}
 		setName(newName);
 		sampler.rename(sample.name, newName);
-		onChange();
 	}
 
 	function stopPropagation(ev: JSX.TargetedMouseEvent<any>) {
@@ -71,7 +82,7 @@ function SampleEditor({ sampler, sample, onChange, editableName }: SampleEditorP
 					onMouseDown={stopPropagation}
 					onClick={() => {
 						sampler.delete(sample.name);
-						onChange();
+						deleteInstrumentSample(instrumentId, sample.name);
 					}}
 				>
 					x
@@ -86,10 +97,7 @@ function SampleEditor({ sampler, sample, onChange, editableName }: SampleEditorP
 					)}
 					{...(state !== 'success' && { title: state.toString() })}
 					onMouseDown={stopPropagation}
-					onChange={ev => {
-						sample.url = ev.currentTarget.value;
-						onChange();
-					}}
+					onChange={ev => sample.url = ev.currentTarget.value}
 					onBlur={() => {
 						delete sample.buffer;
 						sampler.loadSample(sample);
@@ -107,30 +115,22 @@ function isSample(d: DataTransfer): boolean {
 	return d.types.includes('text/uri-list') || window.dragBuffer instanceof AudioBuffer;
 }
 
-function getSample(d: DataTransfer | null): Sample | undefined {
-	if (!d) return;
-	const url = d.getData('text/uri-list');
-	const name = d.getData('name');
-	const buffer = window.dragBuffer;
-	if (!url && !buffer) return undefined;
-	return { url, name, state: buffer ? 'success' : 'loading', buffer };
-}
-
 interface DropZoneProps {
 	sampler: Sampler;
 	sampleName: string;
-	userIndex: Signal<UserIndex>;
+	instrumentId: number;
 	useDragName?: boolean;
 	editableName?: boolean;
 }
 function DropZone({
 	sampler,
 	sampleName,
-	userIndex,
+	instrumentId,
 	useDragName = false,
 	editableName = true
 }: DropZoneProps) {
-	const samples = sampler.samples;
+	const [sample, setSample] = useState(sampler.samples[sampleName]);
+	useEffect(() => setSample(sampler.samples[sampleName]), [sampler.samples, sampleName]);
 
 	return (
 		<li
@@ -145,18 +145,28 @@ function DropZone({
 			onDrop={ev => {
 				ev.preventDefault();
 				ev.currentTarget.classList.remove(classes.willAccept, classes.willReject);
-				const sample = getSample(ev.dataTransfer);
-				if (!sample) return;
-				if (!useDragName) sample.name = sampleName;
+				if (!ev.dataTransfer) return;
+				const url = ev.dataTransfer.getData('text/uri-list');
+				const name = useDragName ? ev.dataTransfer.getData('name') : sampleName;
+				const buffer = window.dragBuffer;
+				if (!url && !buffer) return;
+				let instrumentSample: InstrumentSample = { instrumentId, url, name };
+				addInstrumentSample(instrumentSample);
+				const sample: Sample = {
+					url,
+					name,
+					buffer,
+					state: buffer ? 'success' : 'loading'
+				};
 				sampler.add(sample);
-				userIndex.value = { ...userIndex.value, [sampler.name]: sampler.samples };
+				if (!useDragName) setSample(sample);
 			}}
 		>
-			{samples[sampleName]
+			{sample
 				? <SampleEditor
 						sampler={sampler}
-						sample={samples[sampleName]}
-						onChange={() => userIndex.value = { ...userIndex.value }}
+						sample={sample}
+						instrumentId={instrumentId}
 						editableName={editableName}
 					/>
 				: sampleName
@@ -166,47 +176,64 @@ function DropZone({
 }
 
 interface InstrumentBuilderProps {
-	name: string;
-	userIndex: Signal<UserIndex>;
+	instrument: Instrument;
 };
-export function InstrumentBuilder({ name: inName, userIndex }: InstrumentBuilderProps) {
-	const [name, setName] = useState(inName);
-	useEffect(() => setName(inName), [inName]);
-	const sampler = useMemo(() => new Sampler(getCtx(), inName, { samples: userIndex.value[inName] }), [inName]);
-	const samples = sampler.samples;
+export function InstrumentBuilder({ instrument: inInstrument }: InstrumentBuilderProps) {
+	const instrument = useSignal({ ...inInstrument });
+	const sampler = useMemo(() => new Sampler(getCtx()), []);
 
-	if (Object.keys(userIndex.value).length === 0) {
+	useEffect(() => {
+		function fetchSamples() {
+			if (!inInstrument.id) return;
+			getInstrumentSamples(inInstrument.id).then(instrumentSamples => {
+				sampler.samples = instrumentSamples.reduce((acc, cur) => {
+					acc[cur.name] = sampler.samples[cur.name] || { ...cur, state: 'loading' };
+					return acc;
+				}, {} as Samples);
+				sampler.load();
+				instrument.value = { ...inInstrument };
+			});
+		}
+		fetchSamples();
+
+		eventEmitter.addEventListener('instrumentSamples', fetchSamples);
+		return () => eventEmitter.removeEventListener('instrumentSamples', fetchSamples);
+	}, [inInstrument.id]);
+
+	if (!instrument.value.id) {
 		return (
 			<div class={classes.builder}>
-				Create a new instrument in the panel on the left.
+				Select a user instrument from the panel on the left.
 			</div>
 		);
 	}
 
-	function onNewName(ev: any, newName: string) {
-		if (userIndex.value[newName]) {
-			ev.currentTarget.innerText = name;
-			return;
-		}
-		userIndex.value[newName] = userIndex.value[name];
-		delete userIndex.value[name];
-		userIndex.value = { ...userIndex.value };
-		setName(newName);
+	function onRename(ev: any, newName: string) {
+		const oldName = instrument.value.name;
+		putInstrument({ ...instrument.value, name: newName })
+			.catch(err => {
+				// Name already taken
+				if (err.name == 'ConstraintError') ev.target.innerText = oldName;
+			});
 	}
+
+	const dropZoneProps = { instrumentId: instrument.value.id as number, sampler };
 
 	return (
 		<div class={classes.builder}>
-			<Header value={name} onChange={onNewName} />
+			<Header value={instrument.value.name} onChange={onRename} />
 			<ol class={classes.standardKit}>
 				{Object.keys(standardKit).map(k =>
-					<DropZone userIndex={userIndex} sampler={sampler} sampleName={k} editableName={false} />
+					<DropZone {...dropZoneProps} sampleName={k} editableName={false} />
 				)}
 			</ol>
 			<ul>
-				{Object.values(samples).filter(s => !(s.name in standardKit)).map(s =>
-					<DropZone userIndex={userIndex} sampler={sampler} sampleName={s.name} />
-				)}
-				<DropZone userIndex={userIndex} sampler={sampler} sampleName="+" useDragName />
+				{Object.values(sampler.samples)
+					.filter(s => !(s.name in standardKit))
+					.map(s =>
+						<DropZone {...dropZoneProps} sampleName={s.name} />
+					)}
+				<DropZone {...dropZoneProps} sampleName="+" useDragName />
 			</ul>
 		</div>
 	);

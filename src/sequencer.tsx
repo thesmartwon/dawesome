@@ -1,38 +1,57 @@
 import { useState } from 'preact/hooks';
 import { getCtx, getStorage } from './lib/ctx.js';
-import type { Index, UserIndex, Category } from './types.js';
+import type { Index, UserIndex } from './types.js';
 import { Sampler } from './smplr/index.js';
 import { Percussion } from './input/percussion/sequence.js';
 import { Signal } from '@preact/signals';
 import { Sequence } from './sequence.js';
-
-interface InstrumentSequence {
-	instrument: Sampler;
-	sequence: Sequence;
-}
+import { Header } from './input/header.js';
+import builderClasses from './instrument-builder.css';
 
 function makeInstrument(userIndex: UserIndex, id: string) {
 	const storage = getStorage();
 	return new Sampler(getCtx(), id, { samples: userIndex[id], storage });
 }
 
-function saveSequences(sequences: InstrumentSequence[]) {
-	const toSerialize = sequences.map(s => ({
-		id: s.instrument.id(),
-		sequence: s.sequence.serialize(),
-	}));
+class InstrumentSequence {
+	constructor(
+		public instrument: Sampler,
+		public bpm: number,
+		public sequence: Sequence,
+	) {}
+
+	serialize() {
+		return {
+			instrument: this.instrument.id(),
+			sequence: this.sequence.items,
+		};
+	}
+
+	static deserialize(userIndex: UserIndex, parsed: any): InstrumentSequence {
+		const instrument = makeInstrument(userIndex, parsed.instrument);
+		return new InstrumentSequence(instrument, parsed.bpm, Sequence.deserialize(parsed.sequence));
+	}
+}
+type InstrumentSequences = {
+	[k: string]: InstrumentSequence
+};
+
+function saveSequences(sequences: InstrumentSequences) {
+	const toSerialize = Object.entries(sequences).reduce((acc, [k, v]) => {
+		acc[k] = v.serialize();
+		return acc;
+	}, {} as { [k: string]: any });
 	localStorage.setItem('sequences', JSON.stringify(toSerialize));
 }
 
-function loadSequences(userIndex: UserIndex): InstrumentSequence[] {
+function loadSequences(userIndex: UserIndex): InstrumentSequences {
 	const existing = localStorage.getItem('sequences');
-	if (!existing) return [];
-	return JSON.parse(existing).map(({ id, sequence }: { id: string, sequence: string }) => {
-		return {
-			instrument: makeInstrument(userIndex, id),
-			sequence: Sequence.deserialize(sequence),
-		};
-	});
+	if (!existing) return {};
+	const parsed = JSON.parse(existing);
+	return Object.entries(parsed).reduce((acc, [k, v]) => {
+		acc[k] = InstrumentSequence.deserialize(userIndex, v);
+		return acc;
+	}, {} as InstrumentSequences);
 }
 
 export interface SequencerProps {
@@ -41,32 +60,54 @@ export interface SequencerProps {
 }
 export function Sequencer({ userIndex }: SequencerProps) {
 	const [sequences, setSequences] = useState(loadSequences(userIndex.value));
-	const [id, setId] = useState(Object.keys(userIndex.value)[0]);
+	const [name, setName] = useState(Object.keys(sequences)[0]);
+	const [instrumentId, setInstrumentId] = useState(Object.keys(userIndex.value)[0]);
 
-	function addInstrument() {
-		makeInstrument(userIndex.value, id)?.load.then(instrument => {
-			setSequences([...sequences, { instrument, sequence: new Sequence() }]);
+	function setter(sequences: InstrumentSequences) {
+		setSequences(sequences);
+		saveSequences(sequences);
+	}
+
+	function addSequence() {
+		let newName = '';
+		for (let i = 1; newName in sequences || newName.length === 0; i++) {
+			newName = `Sequence ${i}`;
+		}
+		const instrument = makeInstrument(userIndex.value, instrumentId);
+		setter({
+			...sequences,
+			[newName]: new InstrumentSequence(instrument, 60, new Sequence())
 		});
+	}
+
+	function rename(ev: any, newName: string) {
+		if (sequences[newName]) {
+			ev.currentTarget.innerText = name;
+			return;
+		}
+		sequences[newName] = sequences[name];
+		delete sequences[name];
+		setter({ ...sequences });
+		setName(newName);
 	}
 
 	return (
 		<div>
 			<ul>
-				{sequences.map((s, i) =>
+				{Object.entries(sequences).map(([k, v]) =>
 					<li>
-						<h2>
-							<span>{s.instrument.name}</span>
+						<div class={builderClasses.titleRow}>
+							<Header value={k} onChange={rename} />
 							<button onClick={() => {
-								sequences.splice(i, 1);
-								setSequences([...sequences]);
-								saveSequences(sequences)
+								delete sequences[k];
+								setter({ ...sequences });
 							}}>
-								Delete
+								x
 							</button>
-						</h2>
+						</div>
 						<Percussion
-							drums={s.instrument as Sampler}
-							sequence={s.sequence}
+							drums={v.instrument as Sampler}
+							sequence={v.sequence}
 							onChange={() => saveSequences(sequences)}
 						/>
 					</li>
@@ -74,15 +115,15 @@ export function Sequencer({ userIndex }: SequencerProps) {
 			</ul>
 			<div>
 				<select
-					value={id}
-					name="instrument"
-					onChange={ev => setId(ev.currentTarget.value as Category)}
+					value={instrumentId}
+					name="instrumentId"
+					onChange={ev => setInstrumentId(ev.currentTarget.value)}
 				>
 					{Object.keys(userIndex.value).map(k =>
 						<option value={k}>{k}</option>
 					)}
 				</select>
-				<button disabled={!id} onClick={addInstrument}>
+				<button disabled={!instrumentId} onClick={addSequence}>
 					Add
 				</button>
 			</div>

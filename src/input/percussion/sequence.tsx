@@ -116,6 +116,8 @@ export function Percussion({ drums, sequence, onChange }: PercussionProps) {
 							i.time = start.value + (i.time - start.value) * tempo.value / newTempo / timeSigDenom.value;
 						});
 						tempo.value = newTempo;
+						sequence.bpm = newTempo;
+						onChange();
 					}}
 				/>
 			 {tempo.value}

@@ -9,11 +9,10 @@ import { Midi } from './lib/note.js';
 import { PianoNote } from './input/key.js';
 import keyClasses from './input/key.css';
 import { midiToNoteName } from '@tonaljs/midi';
-import { Category } from './types.js';
+import { Instrument } from './db.js';
 
 interface InstrumentProps {
-	category: Category;
-	name: string;
+	instrument: Instrument;
 	files: string[];
 }
 
@@ -84,8 +83,9 @@ function PianoPlayer({ baseUrl }: PianoPlayerProps) {
 	);
 }
 
-export function InstrumentPlayer({ category, name, files }: InstrumentProps) {
+export function InstrumentPlayer({ instrument, files }: InstrumentProps) {
 	if (files.length === 0) return null;
+	const { name, category } = instrument;
 
 	if (category === 'percussion') return <Percussion name={name} files={files} />
 

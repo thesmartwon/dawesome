@@ -2,6 +2,7 @@ import { sep } from 'path'
 import htmlPlugin from 'esbuild-plugin-template'
 import copyPlugin from 'esbuild-copy-static-files'
 import cssModulesPlugin from 'esbuild-css-modules-plugin'
+import { readFileSync } from 'node:fs';
 
 function template(result, initialOptions) {
 		const outputs = (Object.keys(result?.metafile?.outputs ?? []));
@@ -32,12 +33,14 @@ const htmlConfig = [
 ];
 
 const outdir = 'dist';
+const packageJson = JSON.parse(readFileSync('package.json'));
 
 export const esbuildConfig = ({ isProd }) => ({
 	entryPoints: ['src/main.tsx'],
 	entryNames: `[dir]/[name]${isProd ? '.[hash]' : ''}`,
 	define: {
 		SAMPLE_URL: JSON.stringify('https://samples.dawesome.io'),
+		APP_NAME: JSON.stringify(packageJson.name),
 	},
 	metafile: true,
 	bundle: true,

@@ -27,7 +27,6 @@ export type SampleOptions = {
   loop?: boolean;
   loopStart?: number;
   loopEnd?: number;
-  // not implemented yet
   gainOffset?: number;
 };
 

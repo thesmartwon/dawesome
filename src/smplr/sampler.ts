@@ -39,15 +39,12 @@ export type SamplerConfig = {
  * @private
  */
 export class Sampler {
-	name: string;
 	options: SamplerConfig;
 	samples: Samples;
 	readonly player: DefaultPlayer;
-	readonly load: Promise<this>;
 
 	public constructor(
 		public readonly context: AudioContext,
-		name: string,
 		options: Partial<SamplerConfig> = {}
 	) {
 		this.options = {
@@ -59,16 +56,9 @@ export class Sampler {
 			storage: options.storage ?? HttpStorage,
 			volumeToGain: options.volumeToGain ?? midiVelToGain,
 		};
-		this.name = name;
 		this.samples = this.options.samples;
 		this.player = new DefaultPlayer(context, this.options);
-		this.load = Promise.all([
-			Object.values(this.options.samples).map(s => this.loadSample(s))
-		]).then(() => this);
-	}
-
-	id() {
-		return this.name;
+		this.load();
 	}
 
 	rename(oldName: string, newName: string) {
@@ -90,6 +80,12 @@ export class Sampler {
 			}
 		}
 		this.player.buffers[sample.name] = sample.buffer;
+	}
+
+	async load(): Promise<this> {
+		return Promise.all([
+			Object.values(this.samples).map(s => this.loadSample(s))
+		]).then(() => this);
 	}
 
 	async add(sample: Sample) {
