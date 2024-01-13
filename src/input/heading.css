@@ -1,6 +1,5 @@
-.header {
+.heading {
 	overflow-x: clip;
-	text-overflow: hidden;
 	word-break: break-all;
 	word-wrap: break-word;
 }

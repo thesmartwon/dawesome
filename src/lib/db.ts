@@ -1,8 +1,8 @@
-import type { SampleOptions } from './smplr/player/types.js';
+import type { SampleOptions } from '../smplr/player/types.js';
 
 const DB_NAME = APP_NAME;
 const DB_VERSION = 1; // Must be positive int
-let db: IDBDatabase;
+let cachedDb: IDBDatabase | undefined;
 
 export const eventEmitter = new class extends EventTarget {
 	broadcast(name: string) {
@@ -13,7 +13,7 @@ export const eventEmitter = new class extends EventTarget {
 export type Instrument = {
 	id?: number;
 	name: string;
-	category: Category;
+	category: string;
 	detune?: number;
 	volume?: number;
 	velocity?: number;
@@ -26,39 +26,46 @@ export type InstrumentSample = {
 	url: string;
 } & SampleOptions;
 
-export function open() {
-	const req = indexedDB.open(DB_NAME, DB_VERSION);
-	req.onsuccess = () => db = req.result;
-	req.onerror = (evt: any) => {
-		console.error("openDb:", evt.target.error);
-		throw evt.target.error;
-	};
+export type InstrumentSequenceNote = {
+	name: string;
+	beat: number;
+};
+export type InstrumentSequence = {
+	id?: number;
+	type: 'pad' | 'roll';
+	name: string;
+	bpm: number;
+	notes: InstrumentSequenceNote[];
+	instrumentId?: number;
+} & SampleOptions;
 
-	req.onupgradeneeded = (evt: any) => {
-		console.log("openDb.onupgradeneeded");
-		db = evt.target.result;
-		const instruments = db.createObjectStore("instruments", { autoIncrement: true });
-		instruments.createIndex('name', 'name', { unique: true });
-		instruments.createIndex('category', 'category');
-		// instruments.createIndex('detune', 'detune');
-		// instruments.createIndex('volume', 'volume');
-		// instruments.createIndex('velocity', 'velocity');
-		// instruments.createIndex('decayTime', 'decayTime');
-		// instruments.createIndex('lpfCutoffHz', 'lpfCutoffHz');
+export async function openDb(): Promise<IDBDatabase> {
+	if (cachedDb) return cachedDb;
 
-		const instrumentSamples = db.createObjectStore("instrumentSamples", { autoIncrement: true });
-		instrumentSamples.createIndex('instrumentIdName', ['instrumentId', 'name'], { unique: true });
-		instrumentSamples.createIndex('url', 'url');
-		// instrumentSamples.createIndex('decayTime', 'decayTime');
-		// instrumentSamples.createIndex('detune', 'detune');
-		// instrumentSamples.createIndex('duration', 'duration');
-		// instrumentSamples.createIndex('velocity', 'velocity');
-		// instrumentSamples.createIndex('lpfCutoffHz', 'lpfCutoffHz');
-		// instrumentSamples.createIndex('loop', 'loop');
-		// instrumentSamples.createIndex('loopStart', 'loopStart');
-		// instrumentSamples.createIndex('loopEnd', 'loopEnd');
-		// instrumentSamples.createIndex('gainOffset', 'gainOffset');
-	};
+	return new Promise((res, rej) => {
+		const req = indexedDB.open(DB_NAME, DB_VERSION);
+		req.onsuccess = () => {
+			cachedDb = req.result;
+			res(cachedDb);
+		};
+		req.onerror = (evt: any) => rej(evt.target.error);
+
+		req.onupgradeneeded = (evt: any) => {
+			console.log('onupgradeneeded');
+			cachedDb = evt.target.result as IDBDatabase;
+			const instruments = cachedDb.createObjectStore('instruments', { autoIncrement: true });
+			instruments.createIndex('name', 'name', { unique: true });
+			instruments.createIndex('category', 'category');
+
+			const instrumentSamples = cachedDb.createObjectStore('instrumentSamples', { autoIncrement: true });
+			instrumentSamples.createIndex('instrumentIdName', ['instrumentId', 'name'], { unique: true });
+			instrumentSamples.createIndex('url', 'url');
+
+			const sequences = cachedDb.createObjectStore('sequences', { autoIncrement: true });
+			sequences.createIndex('name', 'name', { unique: true });
+			sequences.createIndex('bpm', 'bpm');
+		};
+	});
 }
 
 async function promisify<T>(req: IDBRequest<any>): Promise<T> {
@@ -78,6 +85,7 @@ async function promisify<T>(req: IDBRequest<any>): Promise<T> {
 }
 
 export async function getInstruments(): Promise<Instrument[]> {
+	const db = await openDb();
 	const store = db.transaction('instruments').objectStore('instruments');
 	const keys = await promisify<number[]>(store.getAllKeys());
 	const values = await promisify<Instrument[]>(store.getAll());
@@ -87,6 +95,7 @@ export async function getInstruments(): Promise<Instrument[]> {
 }
 
 export async function addInstrument(instrument: Omit<Instrument, 'id'>): Promise<number> {
+	const db = await openDb();
 	const req = db
 		.transaction('instruments', 'readwrite')
 		.objectStore('instruments')
@@ -96,6 +105,7 @@ export async function addInstrument(instrument: Omit<Instrument, 'id'>): Promise
 }
 
 export async function deleteInstrument(key: number): Promise<void> {
+	const db = await openDb();
 	const transaction = db.transaction(['instruments', 'instrumentSamples'], 'readwrite');
 	const req = transaction
 		.objectStore('instruments')
@@ -108,6 +118,7 @@ export async function deleteInstrument(key: number): Promise<void> {
 }
 
 export async function putInstrument(instrument: Instrument): Promise<number> {
+	const db = await openDb();
 	const key = instrument.id;
 	const req = db
 		.transaction('instruments', 'readwrite')
@@ -118,6 +129,7 @@ export async function putInstrument(instrument: Instrument): Promise<number> {
 }
 
 export async function getInstrumentSamples(key: number): Promise<InstrumentSample[]> {
+	const db = await openDb();
 	const req = db
 		.transaction('instrumentSamples')
 		.objectStore('instrumentSamples')
@@ -128,6 +140,7 @@ export async function getInstrumentSamples(key: number): Promise<InstrumentSampl
 }
 
 export async function addInstrumentSample(sample: InstrumentSample): Promise<void> {
+	const db = await openDb();
 	const req = db
 		.transaction('instrumentSamples', 'readwrite')
 		.objectStore('instrumentSamples')
@@ -137,10 +150,52 @@ export async function addInstrumentSample(sample: InstrumentSample): Promise<voi
 }
 
 export async function deleteInstrumentSample(instrumentId: number, name: string): Promise<void> {
+	const db = await openDb();
 	const req = db
 		.transaction('instrumentSamples', 'readwrite')
 		.objectStore('instrumentSamples')
 		.delete([instrumentId, name]);
+
+	return promisify(req);
+}
+
+export async function getSequences(): Promise<InstrumentSequence[]> {
+	const db = await openDb();
+	const store = db.transaction('sequences').objectStore('sequences');
+	const keys = await promisify<number[]>(store.getAllKeys());
+	const values = await promisify<InstrumentSequence[]>(store.getAll());
+
+	values.forEach((v, i) => v.id = keys[i]);
+	return values;
+}
+
+export async function addSequence(sequence: InstrumentSequence): Promise<number> {
+	const db = await openDb();
+	const req = db
+		.transaction('sequences', 'readwrite')
+		.objectStore('sequences')
+		.add(sequence);
+
+	return promisify(req);
+}
+
+export async function putSequence(sequence: InstrumentSequence): Promise<number> {
+	const db = await openDb();
+	const key = sequence.id;
+	const req = db
+		.transaction('instruments', 'readwrite')
+		.objectStore('instruments')
+		.put(sequence, key);
+
+	return promisify(req);
+}
+
+export async function deleteSequence(key: number): Promise<void> {
+	const db = await openDb();
+	const req = db
+		.transaction('sequences', 'readwrite')
+		.objectStore('sequences')
+		.delete(key);
 
 	return promisify(req);
 }

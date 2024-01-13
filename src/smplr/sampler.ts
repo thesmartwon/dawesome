@@ -4,6 +4,7 @@ import { SampleStart, SampleStop } from "./player/types";
 import { midiVelToGain } from "./player/volume";
 import { HttpStorage, Storage } from "./storage";
 import { SampleOptions } from './player/types.js';
+import { getCtx, getStorage } from "../lib/ctx";
 
 export type SampleState = 'loading' | 'success' | Error;
 export type Sample = {
@@ -43,17 +44,15 @@ export class Sampler {
 	samples: Samples;
 	readonly player: DefaultPlayer;
 
-	public constructor(
-		public readonly context: AudioContext,
-		options: Partial<SamplerConfig> = {}
-	) {
+	public constructor(options: Partial<SamplerConfig> = {}) {
+		const context = getCtx();
 		this.options = {
 			destination: options.destination ?? context.destination,
 			detune: 0,
 			volume: options.volume ?? 100,
 			velocity: options.velocity ?? 100,
 			samples: options.samples ?? {},
-			storage: options.storage ?? HttpStorage,
+			storage: options.storage ?? getStorage(),
 			volumeToGain: options.volumeToGain ?? midiVelToGain,
 		};
 		this.samples = this.options.samples;

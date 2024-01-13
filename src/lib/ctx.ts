@@ -1,6 +1,7 @@
 import { HttpStorage, CacheStorage, Storage } from "../smplr/storage.js";
 
 let ctx: AudioContext | undefined;
+let cache: Storage | undefined;
 
 export function getCtx() {
 	ctx ??= new AudioContext();
@@ -8,5 +9,6 @@ export function getCtx() {
 }
 
 export function getStorage(): Storage {
-	return HttpStorage;
+	cache ??= HttpStorage;
+	return cache;
 }

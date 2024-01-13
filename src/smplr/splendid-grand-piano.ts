@@ -74,13 +74,13 @@ export class SplendidGrandPiano {
 
     const found = this.#sampleToMidi(sample);
     if (!found) return () => undefined;
-    sample.note = found[0];
-    sample.stopId = sample.stopId ?? found[1];
-    sample.detune = found[2] + (sample.detune ?? this.options.detune);
+    sample.note = found.midi;
+    sample.stopId = sample.stopId ?? found.stopId;
+    sample.detune = found.detune + (sample.detune ?? this.options.detune);
     return this.player.start(sample);
   }
 
-  #sampleToMidi(sample: SampleStart): [string, number, number] | undefined {
+  #sampleToMidi(sample: SampleStart) {
     const midi = toMidi(sample.note);
     if (!midi) return;
 
@@ -104,16 +104,19 @@ function findNearestMidiInLayer(
   prefix: string,
   midi: number,
   buffers: AudioBuffers
-): [string, number, number] {
+) {
   let i = 0;
   while (buffers[prefix + (midi + i)] === undefined && i < 128) {
     if (i > 0) i = -i;
     else i = -i + 1;
   }
+	i %= 127;
 
-  return i === 127
-    ? [prefix + midi, midi, 0]
-    : [prefix + (midi + i), midi, -i * 100];
+  return {
+		midi: prefix + (midi + i),
+		stopId: midi,
+		detune: -i * 100,
+	};
 }
 
 function splendidGrandPianoLoader(
@@ -125,16 +128,8 @@ function splendidGrandPianoLoader(
   }
 ): AudioBuffersLoader {
   const format = findFirstSupportedFormat(["ogg", "m4a"]) ?? "ogg";
-  let layers = notesToLoad
-    ? LAYERS.filter(
-        (layer) =>
-          layer.vel_range[0] <= notesToLoad.velocityRange[1] &&
-          layer.vel_range[1] >= notesToLoad.velocityRange[0]
-      )
-    : LAYERS;
-
   return async (context, buffers) => {
-    for (const layer of layers) {
+    for (const layer of LAYERS) {
       const samples = notesToLoad
         ? layer.samples.filter(sample => notesToLoad.notes.includes(sample[0] as number))
         : layer.samples;

@@ -1,43 +1,54 @@
-import { useSignal } from '@preact/signals';
 import { useRef, useEffect, useState, useMemo } from 'preact/hooks';
 import { MIDISelect, Input } from './input/midi.js';
 import { Piano } from './input/piano.js';
-import { Percussion } from './input/percussion/sound.js';
+import { Soundboard } from './input/soundboard.js';
 import { getCtx, getStorage } from './lib/ctx.js';
 import { SplendidGrandPiano } from './smplr/index.js';
 import { Midi } from './lib/note.js';
 import { PianoNote } from './input/key.js';
 import keyClasses from './input/key.css';
 import { midiToNoteName } from '@tonaljs/midi';
-import { Instrument } from './db.js';
+import { Instrument } from './lib/db.js';
+import { Sampler, Samples } from './smplr';
 
-interface InstrumentProps {
-	instrument: Instrument;
+interface PercussionPlayerProps {
+	name: string;
+	baseUrl: string;
 	files: string[];
+};
+function PercussionPlayer({ name, baseUrl, files }: PercussionPlayerProps) {
+	const sampler = useMemo(() => {
+		const samples = files.reduce((acc, cur) => {
+			acc[cur] = {
+				name: cur,
+				url: `${baseUrl}/${cur}.ogg`,
+				state: 'loading',
+			};
+			return acc;
+		}, {} as Samples);
+		return new Sampler({ samples });
+	}, [baseUrl, files]);
+
+	return <Soundboard name={name} sampler={sampler} />;
 }
 
 interface PianoPlayerProps {
 	baseUrl: string;
 };
-
 function PianoPlayer({ baseUrl }: PianoPlayerProps) {
 	const div = useRef<HTMLDivElement | null>(null);
 	const [lastPlayed, setLastPlayed] = useState<{ note: number, velocity: number }  | null>(null);
-	const loading = useSignal(true);
 	const [input, setInput] = useState<Input>();
+	const [piano, setPiano] = useState<SplendidGrandPiano | undefined>(undefined);
 
-	const instrument = useMemo(
-		() => {
-			const res = new SplendidGrandPiano(getCtx(), baseUrl, { storage: getStorage() });
-			res.load.then(() => loading.value = false);
-			return res;
-		},
-		[baseUrl]
-	);
+	useEffect(() => {
+		new SplendidGrandPiano(getCtx(), baseUrl, { storage: getStorage() }).load.then(setPiano);
+	}, [baseUrl]);
+	useEffect(() => () => piano?.stop(), []);
 
 	function onPress(ev: PianoNote) {
 		const key = div.current?.querySelector(`li[data-key="${ev.midi}"]`) as HTMLLIElement;
-		if (loading.value || (key && key.classList.contains(keyClasses.held))) return;
+		if (!piano || (key && key.classList.contains(keyClasses.held))) return;
 		const sample = {
 			note: ev.midi,
 			velocity: ev.velocity,
@@ -48,12 +59,12 @@ function PianoPlayer({ baseUrl }: PianoPlayerProps) {
 			},
 		};
 
-		instrument.start(sample);
+		piano.start(sample);
 		setLastPlayed(sample);
 	}
 
 	function onRelease(midi: Midi) {
-		instrument.stop({ stopId: midi });
+		piano?.stop({ stopId: midi });
 		const key = div.current?.querySelector(`li[data-key="${midi}"]`);
 		if (key) key.classList.remove(keyClasses.held);
 	}
@@ -70,12 +81,11 @@ function PianoPlayer({ baseUrl }: PianoPlayerProps) {
 		return () => input?.removeEventListener('midimessage', playMidiNote);
 	}, [input]);
 
-	useEffect(() => () => instrument.stop(), []);
 
 	return (
 		<div ref={div}>
 			<MIDISelect value={input} setValue={setInput} />
-			<Piano onPress={onPress} onRelease={onRelease} loading={loading.value} />
+			<Piano onPress={onPress} onRelease={onRelease} loading={!piano} />
 			<div>
 				{lastPlayed && `Note: ${midiToNoteName(+lastPlayed.note)} Velocity: ${Math.round(+lastPlayed.velocity)}`}
 			</div>
@@ -83,11 +93,16 @@ function PianoPlayer({ baseUrl }: PianoPlayerProps) {
 	);
 }
 
+interface InstrumentProps {
+	instrument?: Instrument;
+	files: string[];
+};
 export function InstrumentPlayer({ instrument, files }: InstrumentProps) {
-	if (files.length === 0) return null;
-	const { name, category } = instrument;
-
-	if (category === 'percussion') return <Percussion name={name} files={files} />
-
-	return <PianoPlayer baseUrl={`${SAMPLE_URL}/${category}/${name}`} />
+	if (files.length === 0 || !instrument) return null;
+	const baseUrl = `${SAMPLE_URL}/${instrument.category}/${instrument.name}`;
+	switch (instrument.category) {
+		case undefined: return null;
+		case 'percussion': return <PercussionPlayer baseUrl={baseUrl} files={files} name={instrument.name} />;
+		default: return <PianoPlayer baseUrl={baseUrl} />;
+	}
 }

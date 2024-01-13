@@ -4,9 +4,9 @@ import { useSignal, useComputed } from '@preact/signals';
 import { useEffect, useRef } from 'preact/hooks';
 import { Key, PianoNote } from './key.js';
 import { pianoKeys } from '../settings.js';
+import { classnames, range } from '../helpers.js';
 import classes from './piano.css';
 import keyClasses from './key.css';
-import { classnames, range } from '../helpers.js';
 
 interface PianoProps {
 	onPress: (note: PianoNote) => void;

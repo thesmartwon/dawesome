@@ -2,11 +2,10 @@ import { JSX } from 'preact';
 import { useState, useEffect, useMemo } from 'preact/hooks';
 import { Sampler, Sample, Samples } from './smplr/sampler.js';
 import classes from './instrument-builder.css';
-import { getCtx } from './lib/ctx.js';
 import { ExternalLink } from './icons/index.js';
-import { standardKit } from './input/percussion/sound.js'
+import { standardKit } from './input/soundboard.js'
 import { classnames } from './helpers.js';
-import { Header } from './input/header.js';
+import { Heading } from './input/heading.js';
 import {
 	addInstrumentSample,
 	getInstrumentSamples,
@@ -15,7 +14,7 @@ import {
 	putInstrument,
 	eventEmitter,
 	deleteInstrumentSample,
-} from './db.js';
+} from './lib/db.js';
 import { useSignal } from '@preact/signals';
 
 function isError(e: any) {
@@ -72,7 +71,7 @@ function SampleEditor({ sampler, sample, instrumentId, editableName }: SampleEdi
 			onDragEnd={() => window.dragBuffer = undefined}
 		>
 			<div class={classes.titleRow}>
-				<Header is="h3"
+				<Heading is="h3"
 					value={name}
 					onChange={rename}
 					contentEditable={editableName}
@@ -176,15 +175,15 @@ function DropZone({
 }
 
 interface InstrumentBuilderProps {
-	instrument: Instrument;
+	instrument?: Instrument;
 };
 export function InstrumentBuilder({ instrument: inInstrument }: InstrumentBuilderProps) {
 	const instrument = useSignal({ ...inInstrument });
-	const sampler = useMemo(() => new Sampler(getCtx()), []);
+	const sampler = useMemo(() => new Sampler(), []);
 
 	useEffect(() => {
 		function fetchSamples() {
-			if (!inInstrument.id) return;
+			if (!inInstrument?.id) return;
 			getInstrumentSamples(inInstrument.id).then(instrumentSamples => {
 				sampler.samples = instrumentSamples.reduce((acc, cur) => {
 					acc[cur.name] = sampler.samples[cur.name] || { ...cur, state: 'loading' };
@@ -198,7 +197,7 @@ export function InstrumentBuilder({ instrument: inInstrument }: InstrumentBuilde
 
 		eventEmitter.addEventListener('instrumentSamples', fetchSamples);
 		return () => eventEmitter.removeEventListener('instrumentSamples', fetchSamples);
-	}, [inInstrument.id]);
+	}, [inInstrument?.id]);
 
 	if (!instrument.value.id) {
 		return (
@@ -209,8 +208,9 @@ export function InstrumentBuilder({ instrument: inInstrument }: InstrumentBuilde
 	}
 
 	function onRename(ev: any, newName: string) {
+		if (!instrument.value) return;
 		const oldName = instrument.value.name;
-		putInstrument({ ...instrument.value, name: newName })
+		putInstrument({ category: '', ...instrument.value, name: newName })
 			.catch(err => {
 				// Name already taken
 				if (err.name == 'ConstraintError') ev.target.innerText = oldName;
@@ -221,7 +221,7 @@ export function InstrumentBuilder({ instrument: inInstrument }: InstrumentBuilde
 
 	return (
 		<div class={classes.builder}>
-			<Header value={instrument.value.name} onChange={onRename} />
+			<Heading value={instrument.value.name} onChange={onRename} />
 			<ol class={classes.standardKit}>
 				{Object.keys(standardKit).map(k =>
 					<DropZone {...dropZoneProps} sampleName={k} editableName={false} />

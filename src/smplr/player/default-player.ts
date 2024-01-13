@@ -1,11 +1,9 @@
-import { SamplerConfig } from "../sampler";
 import { Channel, ChannelConfig, OutputChannel } from "./channel";
 import { QueuedPlayer, QueuedPlayerConfig } from "./queued-player";
 import { SamplePlayer } from "./sample-player";
 import { InternalPlayer, SampleStart, SampleStop } from "./types";
 
 export type DefaultPlayerConfig = ChannelConfig &
-  SamplerConfig &
   QueuedPlayerConfig;
 
 /**

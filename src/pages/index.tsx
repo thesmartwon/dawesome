@@ -1,6 +1,7 @@
 import { Link } from 'preact-router';
+import type { PageProps } from './pages.js';
 
-export function Intro() {
+export default function Intro(_: PageProps) {
 	return (
 		<div>
 			Welcome to Dawesome!

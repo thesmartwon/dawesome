@@ -1,22 +1,12 @@
 import { SortedQueue } from './smplr/player/sorted-queue.js';
 
-export type Note = {
+export type SequenceNote = {
 	note: string;
 	beat: number;
 };
-export class Sequence extends SortedQueue<Note> {
+export class Sequence extends SortedQueue<SequenceNote> {
 	constructor() {
 		super((a, b) => a.beat - b.beat);
-	}
-
-	serialize(): Note[] {
-		return this.items;
-	}
-
-	static deserialize(items: Note[]): Sequence {
-		const res = new Sequence();
-		res.items = items;
-		return res;
 	}
 
 	uniqueNotes(): string[] {
