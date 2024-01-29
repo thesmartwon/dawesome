@@ -1,7 +1,19 @@
+.nav {
+	margin: 1em;
+	display: flex;
+	align-items: center;
+}
+.nav > svg {
+	margin: 0 .8em;
+}
 .link {
 	font-size: 32px;
 	color: black;
-	padding: 1em;
+	color: rgb(var(--color--link));
+	margin: 0 .8em;
+}
+.spacer {
+	flex-grow: 1;
 }
 
 .active {

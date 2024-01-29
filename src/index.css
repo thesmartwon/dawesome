@@ -1,0 +1,25 @@
+:root {
+	--color--background-100: 237, 237, 237;
+	--color--primary-100: 74, 74, 74;
+	--color--secondary-100: 54, 54, 54;
+	--color--border-100: 219, 219, 219;
+	--color--link: 50, 115, 220;
+}
+@media (prefers-color-scheme: dark) {
+	:root {
+		--color--background-100: 18, 18, 18;
+		--color--primary-100: 181, 181, 181;
+		--color--secondary-100: 201, 201, 201;
+		--color--border-100: 36, 36, 36;
+		--color--link: 205, 140, 35;
+	}
+}
+
+html, body, #root {
+	display: flex;
+	flex-direction: column;
+	height: 100vh;
+	width: 100%;
+	background: rgb(var(--color--background-100));
+	color: rgb(var(--color--primary-100));
+}
