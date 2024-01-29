@@ -12,6 +12,87 @@ function getContext(canvas: HTMLCanvasElement) {
 	return ctx;
 }
 
+export const leftRightMap = {
+	// left hand
+	'1': 'C2',
+	'!': 'C#2',
+	'2': 'D2',
+	'@': 'D#2',
+	'3': 'E2',
+	'4': 'F2',
+	'$': 'F#2',
+	'5': 'G2',
+	'%': 'G#2',
+
+	'q': 'A2',
+	'Q': 'A#2',
+	'w': 'B2',
+	'e': 'C3',
+	'E': 'C#3',
+	'r': 'D3',
+	'R': 'D#3',
+	't': 'E3',
+
+	'a': 'F3',
+	'A': 'F#3',
+	's': 'G3',
+	'S': 'G#3',
+	'd': 'A3',
+	'D': 'A#3',
+	'f': 'B3',
+	'g': 'C4',
+	'G': 'C#4',
+
+	'z': 'D4',
+	'Z': 'D#4',
+	'x': 'E4',
+	'c': 'F4',
+	'C': 'F#4',
+	'v': 'G4',
+	'V': 'G#4',
+	'b': 'A4',
+	'B': 'A#4',
+
+	// right hand
+	'6': 'B4',
+	'7': 'C5',
+	'&': 'C#5',
+	'8': 'D5',
+	'*': 'D#5',
+	'9': 'E5',
+	'0': 'F5',
+	')': 'F#5',
+
+	'y': 'G5',
+	'Y': 'G#5',
+	'u': 'A5',
+	'U': 'A#5',
+	'i': 'B5',
+	'o': 'C6',
+	'O': 'C#6',
+	'p': 'D6',
+	'P': 'D#6',
+
+	'h': 'E6',
+	'j': 'F6',
+	'J': 'F#6',
+	'k': 'G6',
+	'K': 'G#6',
+	'l': 'A6',
+	'L': 'A#6',
+	';': 'B6',
+
+	'n': 'C7',
+	'N': 'C#7',
+	'm': 'D7',
+	'M': 'D#7',
+	',': 'E7',
+	'.': 'F7',
+	'>': 'F#7',
+	'/': 'G7',
+	'?': 'G#7',
+} as { [k: string]: string };
+
 class Key {
 	constructor(
 		public x: number,
@@ -19,11 +100,11 @@ class Key {
 		public width: number,
 		public height: number,
 		public note: string,
+		public isDown = false,
 	) {}
 
 	contains(x: number, y: number) {
-		return x >= this.x && x <= this.x + this.width &&
-				y >= this.y && y <= this.y + this.height;
+		return x >= this.x && x <= this.x + this.width && y >= this.y && y <= this.y + this.height;
 	}
 };
 
@@ -37,22 +118,48 @@ export class Piano {
 	whiteKeys: Key[] = [];
 	blackKeys: Key[] = [];
 
+	held = {} as { [key: string]: number };
+	mouseHeld = '';
+
+	hotkeys = { ...leftRightMap };
+	noteHotkeys = Object.entries(this.hotkeys).reduce((acc, [k, v]) => {
+		acc[v] = k;
+		return acc;
+	}, {} as { [k: string]: string });
+
 	constructor(
 		public canvas: HTMLCanvasElement,
 		public whiteHeightPx = 350,
-		public onKeyDown: (note: string) => void,
+		public onKeyDown: (note: string, velocity: number) => void,
 		public onKeyUp: (note: string) => void,
 	) {
 		new ResizeObserver(debounce(() => this.onResize())).observe(canvas);
+
 		canvas.addEventListener('wheel', ev => this.onWheel(ev));
-		canvas.addEventListener('mousedown', ev => this.onMouse(ev, onKeyDown));
-		canvas.addEventListener('mouseup', ev => this.onMouse(ev, onKeyUp));
+		canvas.addEventListener('mousedown', ev => this.onMouse(ev, true));
+		canvas.addEventListener('mouseup', ev => this.onMouse(ev, false));
+		canvas.addEventListener('mousemove', ev => this.onMouseMove(ev));
+		document.addEventListener('keydown', ev => this.onKey(ev, true));
+		document.addEventListener('keyup', ev => this.onKey(ev, false));
 	}
 
 	setOffset(n: number) {
 		this.offsetX = clamp(n, this.canvas.width - this.virtualWidth, 0);
-		// TODO: Find C closest to middle for relative hotkeys.
 		this.render();
+	}
+
+	onDown(note: string, velocity: number) {
+		this.held[note] = velocity;
+		this.render();
+		// User callback
+		this.onKeyDown(note, velocity);
+	}
+
+	onUp(note: string) {
+		this.held[note] = 0;
+		this.render();
+		// User callback
+		this.onKeyUp(note);
 	}
 
 	private layout() {
@@ -110,17 +217,61 @@ export class Piano {
 		this.render();
 	}
 
-	private onMouse(ev: MouseEvent, cb: (key: string) => void) {
-		ev.preventDefault();
+	private onDownOrUp(note: string, isDown: boolean) {
+		if (isDown) this.onDown(note, 100);
+		else this.onUp(note);
+	}
+
+	private getNote(ev: MouseEvent): string | undefined {
 		const x = ev.offsetX - this.offsetX;
 		const y = ev.offsetY;
 		for (let i = 0; i < this.blackKeys.length; i++) {
 			const hitbox = this.blackKeys[i];
-			if (hitbox.contains(x, y)) return cb(hitbox.note);
+			if (hitbox.contains(x, y)) return hitbox.note;
 		}
 		for (let i = 0; i < this.whiteKeys.length; i++) {
 			const hitbox = this.whiteKeys[i];
-			if (hitbox.contains(x, y)) return cb(hitbox.note);
+			if (hitbox.contains(x, y)) return hitbox.note;
+		}
+	}
+
+	private onMouse(ev: MouseEvent, isDown: boolean) {
+		if (ev.button != 0) return;
+		ev.preventDefault();
+		const note = this.getNote(ev);
+		if (note) {
+			this.onDownOrUp(note, isDown);
+			this.mouseHeld = isDown ? note : '';
+		}
+	}
+
+	private onMouseMove(ev: MouseEvent) {
+		if (!(ev.buttons & 1)) return;
+		ev.preventDefault();
+		const note = this.getNote(ev);
+		if (this.mouseHeld != note) {
+			this.onUp(this.mouseHeld);
+			if (note) this.onDownOrUp(note, true);
+		}
+		this.mouseHeld = note ?? '';
+	}
+
+
+	private onKey(ev: KeyboardEvent, isDown: boolean) {
+		const note = this.hotkeys[ev.key];
+		if (note) {
+			this.onDownOrUp(note, isDown);
+
+			if (!isDown) {
+				const lowerCaseHotkey = ev.key.toLowerCase();
+				const lowerNote = this.hotkeys[lowerCaseHotkey];
+				if (lowerNote && lowerNote != note) this.onUp(lowerNote);
+
+				const upperCaseHotkey = ev.key.toUpperCase();
+				const upperNote = this.hotkeys[upperCaseHotkey];
+				if (upperNote && upperNote != note) this.onUp(upperNote);
+			}
+			ev.preventDefault();
 		}
 	}
 
@@ -130,13 +281,22 @@ export class Piano {
 
 		let { x, y, width, height, note } = key;
 		x += this.offsetX;
+		if (x + width < 0 || x > ctx.canvas.width) return;
+
 		ctx.fillStyle = isWhite ? 'white' : 'black';
+		if (this.held[note]) ctx.fillStyle = 'gray';
 		ctx.fillRect(x, y, width, height);
 		ctx.strokeRect(x, y, width, height);
 
 		y += height * .85;
 		ctx.fillStyle = isWhite ? 'black' : 'white';
 		ctx.fillText(note, x + width / 2, y, width);
+
+		const hotkey = this.noteHotkeys[note];
+		if (hotkey) {
+			y += 20;
+			ctx.fillText(hotkey, x + width / 2, y, width);
+		}
 	}
 
 	private renderKeys() {
@@ -147,12 +307,8 @@ export class Piano {
 		ctx.font = '14px Arial';
 		ctx.textAlign = 'center';
 
-		for (let i = 0; i < this.whiteKeys.length; i++) {
-			this.renderKey(this.whiteKeys[i]);
-		}
-		for (let i = 0; i < this.blackKeys.length; i++) {
-			this.renderKey(this.blackKeys[i]);
-		}
+		for (let i = 0; i < this.whiteKeys.length; i++) this.renderKey(this.whiteKeys[i]);
+		for (let i = 0; i < this.blackKeys.length; i++) this.renderKey(this.blackKeys[i]);
 	}
 
 	render() {
