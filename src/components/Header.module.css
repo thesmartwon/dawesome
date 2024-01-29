@@ -1,0 +1,10 @@
+.link {
+	font-size: 32px;
+	color: black;
+	padding: 1em;
+}
+
+.active {
+	font-weight: 200;
+	text-decoration-line: underline;
+}

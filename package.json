@@ -1,27 +1,26 @@
 {
-  "name": "dawesome",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "build": "esbuild-scripts build",
-    "start": "esbuild-scripts start",
-    "typecheck": "tsc -noEmit"
-  },
-  "author": "thesmartwon",
-  "license": "MIT",
-  "devDependencies": {
-    "esbuild-copy-static-files": "^0.1.0",
-    "esbuild-css-modules-plugin": "^3.0.3",
-    "esbuild-plugin-template": "^0.0.4",
-    "esbuild-scripts": "^0.0.7",
-    "typescript": "^5.3.2"
-  },
-  "dependencies": {
-    "@preact/signals": "^1.2.2",
-    "mime": "^3.0.0",
-    "preact": "^10.19.2",
-    "preact-router": "^4.1.2",
-    "tonal": "^5.1.2"
-  }
+	"name": "dawesome",
+	"version": "1.0.0",
+	"description": "",
+	"type": "module",
+	"scripts": {
+		"start": "vite",
+		"dev": "vite",
+		"build": "vite build",
+		"serve": "vite preview",
+		"typecheck": "tsc --noEmit"
+	},
+	"author": "thesmartwon",
+	"license": "MIT",
+	"devDependencies": {
+		"typescript": "^5.3.3",
+		"vite": "^5.0.12",
+		"vite-plugin-solid": "^2.9.1",
+		"vite-plugin-solid-svg": "^0.8.0"
+	},
+	"dependencies": {
+		"@solidjs/router": "^0.10.10",
+		"solid-js": "^1.8.12",
+		"tonal": "^5.1.2"
+	}
 }
