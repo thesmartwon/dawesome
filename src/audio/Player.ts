@@ -21,12 +21,44 @@ export function connectSerial(nodes: (AudioNode | AudioInsert | undefined)[]) {
   };
 }
 
+export const globalCtx = new AudioContext();
+export const globalGain = globalCtx.createGain();
+export const globalAnalyzer = globalCtx.createAnalyser();
+
+function createDecayEnvelope(
+	context: BaseAudioContext,
+	seconds: number
+): [AudioNode, (time: number) => number] {
+	let stopAt = 0;
+	const envelope = context.createGain();
+	envelope.gain.value = 1.0;
+
+	function start(time: number): number {
+		if (stopAt) return stopAt;
+		envelope.gain.cancelScheduledValues(time);
+		const envelopeAt = time || context.currentTime;
+		stopAt = envelopeAt + seconds;
+		envelope.gain.setValueAtTime(1.0, envelopeAt);
+		envelope.gain.linearRampToValueAtTime(0, stopAt);
+
+		return stopAt;
+	}
+
+	return [envelope, start];
+}
+
+type SampleOptions = {
+	gain: number;
+	detuneCents: number;
+	decaySeconds: number;
+};
+
 // Queues samples and plays them.
 export class Player {
 	samples: { [k: string]: AudioBuffer } = {};
 
 	constructor(
-		public ctx = new AudioContext(),
+		public ctx = globalCtx,
 	) {
 	}
 
@@ -39,7 +71,12 @@ export class Player {
 		this.samples[name] = buffer;
 	}
 
-	start(name: string, gain: number = 1, cents: number = 0, decayTime: number) {
+	play(name: string, options?: Partial<SampleOptions>) {
+		const opts: SampleOptions = {
+			 gain: options?.gain ?? 1,
+			 detuneCents: options?.detuneCents ?? 0,
+			 decaySeconds: options?.decaySeconds ?? 0.2,
+		};
 		if (!(name in this.samples)) {
 			console.warn('not playing unknown sample', name);
 			return;
@@ -47,13 +84,12 @@ export class Player {
 
 		const source = this.ctx.createBufferSource();
     source.buffer = this.samples[name];
-		source.detune.value = cents;
+		source.detune.value = opts.detuneCents;
 
-		const volume = this.ctx.createGain();
-		volume.gain.value = gain;
+		const gainNode = this.ctx.createGain();
+		gainNode.gain.value = opts.gain;
 
-    // Stop with decay
-    const [decay, startDecay] = createDecayEnvelope(this.ctx, decayTime);
+    const [decay, startDecay] = createDecayEnvelope(this.ctx, opts.decaySeconds);
 		const ctx = this.ctx;
 		function stop(time?: number) {
 			time ??= ctx.currentTime;
@@ -63,10 +99,12 @@ export class Player {
 
 		connectSerial([
 			source,
-			volume,
+			gainNode,
 			decay,
+			globalGain,
+			globalAnalyzer,
 			this.ctx.destination,
-		]),
+		]);
 
 		source.start();
 
@@ -74,26 +112,3 @@ export class Player {
 	}
 }
 
-export const globalPlayer = new Player();
-
-function createDecayEnvelope(
-	context: BaseAudioContext,
-	envelopeTime = 0.2
-): [AudioNode, (time: number) => number] {
-	let stopAt = 0;
-	const envelope = context.createGain();
-	envelope.gain.value = 1.0;
-
-	function start(time: number): number {
-		if (stopAt) return stopAt;
-		envelope.gain.cancelScheduledValues(time);
-		const envelopeAt = time || context.currentTime;
-		stopAt = envelopeAt + envelopeTime;
-		envelope.gain.setValueAtTime(1.0, envelopeAt);
-		envelope.gain.linearRampToValueAtTime(0, stopAt);
-
-		return stopAt;
-	}
-
-	return [envelope, start];
-}

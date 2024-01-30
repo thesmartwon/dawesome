@@ -29,7 +29,6 @@ export function Menu(props: ContextMenuProps) {
 		document.addEventListener('click', close);
 		document.addEventListener('contextmenu', close);
 		onCleanup(() => {
-			console.log('cleanup');
 			document.removeEventListener('click', close);
 			document.removeEventListener('contextmenu', close);
 		});

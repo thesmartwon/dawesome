@@ -7,7 +7,7 @@ const whiteWidth = 2.2;
 const blackWidth = 1.5;
 const blackHeight = 7.2;
 
-function getContext(canvas: HTMLCanvasElement) {
+export function getContext(canvas: HTMLCanvasElement) {
 	const ctx = canvas.getContext('2d');
 	if (!ctx) throw new Error('2d context not supported');
 	return ctx;

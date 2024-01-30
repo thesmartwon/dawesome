@@ -1,12 +1,9 @@
 import { Player } from './Player';
 import { Note } from 'tonal';
 
-export type NoteUrl = {
+export type NoteUrlGain = {
 	freq: number;
 	url: string;
-};
-
-export type NoteUrlGain = NoteUrl & {
 	gain: number;
 };
 
@@ -47,21 +44,7 @@ export function dynamicToGain(dynamic: Dynamic): number {
 // Will detune notes to play new ones.
 export class PitchedPlayer extends Player {
 	layers: { [gainStart: number]: { [freqency: number]: undefined } } = {};
-	playing: { [freq: number]: ReturnType<Player["start"]>[] } = {};
-
-	async loadLayer(noteUrls: NoteUrl[], gainStart: number = 0) {
-		this.layers[gainStart] ??= [];
-
-		const promises: Promise<any>[] = [];
-		for (let i = 0; i < noteUrls.length; i++) {
-			const noteUrl = noteUrls[i];
-			const name = sampleName(gainStart, noteUrl.freq);
-			promises.push(super.loadUrl(name, noteUrl.url));
-			this.layers[gainStart][noteUrl.freq] = undefined;
-		}
-
-		return Promise.all(promises);
-	}
+	playing: { [freq: number]: ReturnType<Player["play"]>[] } = {};
 
 	async loadLayers(notes: NoteUrlGain[]) {
 		const promises: Promise<any>[] = [];
@@ -77,25 +60,24 @@ export class PitchedPlayer extends Player {
 		return Promise.all(promises);
 	}
 
-	play(freq: number, gain: number, decayTime = 0.5) {
-		// desc
-		const gains = Object.keys(this.layers).map(Number).sort((a, b) => b - a);
-		let layer = closest(gain, gains);
+	playFreq(freq: number, gain: number) {
+		const gains = Object.keys(this.layers).map(Number);
+		const layer = closest(gain, gains);
 
 		const frequencies = Object.keys(this.layers[layer]).map(Number);
 		const nearest = closest(freq, frequencies);
 		const name = sampleName(layer, nearest);
-		const dir = nearest < freq ? 1 : -1;
-		const cents = 1200 * Math.log2(freq / nearest) * dir;
-		console.log('play', freq, 'layer', layer, 'closest', nearest, 'cents', cents, 'gain', gain);
 
-		const res = super.start(name, gain, cents, decayTime);
+		const dir = nearest < freq ? 1 : -1;
+		const detuneCents = 1200 * Math.log2(freq / nearest) * dir;
+
+		const res = super.play(name, { gain, detuneCents });
 		this.playing[freq] ??= [];
 		this.playing[freq].push(res);
 		return res;
 	}
 
-	stop(freq: number) {
+	stopFreq(freq: number) {
 		(this.playing[freq] || []).forEach(stopper => stopper && stopper());
 		this.playing[freq] = [];
 	}
@@ -108,7 +90,7 @@ export class PitchedPlayer extends Player {
 		}
 		const gain = midiVelToGain(velocity);
 
-		return this.play(freq, gain);
+		return this.playFreq(freq, gain);
 	}
 
 	stopNote(note: string) {
@@ -118,6 +100,6 @@ export class PitchedPlayer extends Player {
 			return;
 		}
 
-		return this.stop(freq);
+		return this.stopFreq(freq);
 	}
 }
