@@ -1,16 +1,13 @@
 .main {
 	height: 100%;
+	width: 100%;
 	display: flex;
 	flex-direction: column;
 }
 
-.main canvas {
-	width: 100%;
-	aspect-ratio: auto;
-}
-
 .display {
 	flex-grow: 1;
+	min-height: 100px;
 }
 
 .input {
