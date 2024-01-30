@@ -17,6 +17,11 @@
 	}
 }
 
+body {
+	background: rgb(var(--color--background-100));
+	color: rgb(var(--color--primary-100));
+}
+
 #root {
 	display: grid;
 	grid-template-columns: 1fr;
@@ -27,6 +32,3 @@
 	width: 100%;
 }
 
-main {
-	overflow: auto;
-}
