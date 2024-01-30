@@ -115,6 +115,8 @@ export class PianoCanvas {
 	virtualMiddle = 0;
 	loaded = false;
 
+	whiteHeightPx = 0;
+	blackHeightPx = 0;
 	whiteKeys: Key[] = [];
 	blackKeys: Key[] = [];
 
@@ -180,9 +182,9 @@ export class PianoCanvas {
 		this.virtualWidth = 0;
 		this.whiteKeys = [];
 		this.blackKeys = [];
-		const whiteHeightPx = this.canvas.height;
+		const whiteHeightPx = this.whiteHeightPx = this.canvas.height;
 		const whiteWidthPx = whiteHeightPx * whiteWidth / whiteHeight;
-		const blackHeightPx = whiteHeightPx * blackHeight / whiteHeight;
+		const blackHeightPx = this.blackHeightPx = whiteHeightPx * blackHeight / whiteHeight;
 		const blackWidthPx = whiteHeightPx * blackWidth / whiteHeight;
 
 		let y = this.canvas.height - whiteHeightPx;
@@ -231,8 +233,8 @@ export class PianoCanvas {
 		this.render();
 	}
 
-	private onDownOrUp(note: string, isDown: boolean) {
-		if (isDown) this.onDown(note, 100);
+	private onDownOrUp(note: string, isDown: boolean, velocity = 100) {
+		if (isDown) this.onDown(note, velocity);
 		else this.onUp(note);
 	}
 
@@ -254,7 +256,10 @@ export class PianoCanvas {
 		ev.preventDefault();
 		const note = this.getNote(ev);
 		if (note) {
-			this.onDownOrUp(note, isDown);
+			const isWhite = note[1] != '#';
+			const height = isWhite ? this.whiteHeightPx : this.blackHeightPx
+			const velocity = Math.max(10, ev.offsetY / height * 128);
+			this.onDownOrUp(note, isDown, velocity);
 			this.mouseHeld = isDown ? note : '';
 		}
 	}

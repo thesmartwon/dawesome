@@ -1,5 +1,7 @@
 import { onMount, createSignal, For, createEffect } from 'solid-js';
 import { Header, PianoCanvas, ContextMenu, Menu, MenuItem } from '../components';
+import { PitchedPlayer, NoteUrlGain, Dynamic, dynamicToGain } from '../audio/PitchedPlayer';
+import { Note } from 'tonal';
 import styles from './Play.module.css';
 
 type Input = MIDIInput | undefined;
@@ -9,18 +11,40 @@ export function Play() {
 	const [input, setInput] = createSignal<Input>();
 	var inputRef: HTMLCanvasElement | undefined;
 
-	onMount(() => {
+	onMount(async () => {
 		if (!inputRef) return;
 
+		const instrument = new PitchedPlayer();
+
+		const base = 'https://samples.dawesome.io'
+		const index = await fetch(`${base}/index.json`).then(res => res.json()) as any;
+		const sampleList = index.strings['Splendid Grand Piano'] as string[];
+		const noteUrls: NoteUrlGain[] = [];
+		sampleList.forEach(sample => {
+			const note = sample.substring(3);
+			const freq = Note.freq(note);
+			if (!freq) {
+				console.warn('could not parse frequency for sample', sample);
+				return;
+			}
+			const url = `${base}/strings/Splendid Grand Piano/${encodeURIComponent(sample)}.ogg`;
+			const dynamic = sample.substring(0, 2).toLowerCase() as Dynamic;
+			const gain = dynamicToGain(dynamic);
+			noteUrls.push({ freq, url, gain });
+		});
+
+		await instrument.loadLayers(noteUrls);
+
 		function onKeyDown(note: string, velocity: number) {
+			instrument.playNote(note, Math.min(velocity, 100));
 		}
 
 		function onKeyUp(note: string) {
+			instrument.stopNote(note);
 		}
 		const pianoCanvas = new PianoCanvas(inputRef, onKeyDown, onKeyUp);
 		createEffect(() => pianoCanvas.setMidiInput(input()));
 	});
-
 
 	function listMidi() {
 		navigator.requestMIDIAccess().then(m => {
