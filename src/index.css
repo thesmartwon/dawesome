@@ -29,6 +29,6 @@ body {
 	gap: 0px 0px;
 	grid-template-areas: "." ".";
 	height: 100vh;
-	width: 100%;
+	width: 100vw;
 }
 

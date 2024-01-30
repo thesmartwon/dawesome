@@ -76,9 +76,8 @@ export function Play() {
 			<Header />
 			<main>
 				<ContextMenu menu={menu} onOpen={listMidi} class={styles.main}>
-					<canvas class={styles.display}>
-						No 2d context available
-					</canvas>
+					<div class={styles.display}>
+					</div>
 					<canvas ref={inputRef} class={styles.input}>
 						No 2d context available
 					</canvas>
