@@ -1,6 +1,18 @@
-.canvas {
-	/* https://stackoverflow.com/questions/52487743/prevent-flex-item-from-exceeding-parent-height-and-make-scroll-bar-work */
+.main {
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+}
+
+.main canvas {
+	width: 100%;
+	aspect-ratio: auto;
+}
+
+.display {
 	flex-grow: 1;
-	min-height: 0;
-	overflow: auto;
+}
+
+.input {
+	height: 400px;
 }

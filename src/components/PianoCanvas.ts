@@ -1,6 +1,7 @@
-import { debounce, clamp } from './Helpers';
+import { debounce, clamp } from '../Helpers';
 import { Note } from 'tonal';
 
+// Ratios.
 const whiteHeight = 12.2;
 const whiteWidth = 2.2;
 const blackWidth = 1.5;
@@ -108,8 +109,7 @@ class Key {
 	}
 };
 
-export class Piano {
-	dirty = false;
+export class PianoCanvas {
 	offsetX = 0;
 	virtualWidth = 0;
 	virtualMiddle = 0;
@@ -127,9 +127,10 @@ export class Piano {
 		return acc;
 	}, {} as { [k: string]: string });
 
+	midiInput?: MIDIInput;
+
 	constructor(
 		public canvas: HTMLCanvasElement,
-		public whiteHeightPx = 350,
 		public onKeyDown: (note: string, velocity: number) => void,
 		public onKeyUp: (note: string) => void,
 	) {
@@ -139,6 +140,7 @@ export class Piano {
 		canvas.addEventListener('mousedown', ev => this.onMouse(ev, true));
 		canvas.addEventListener('mouseup', ev => this.onMouse(ev, false));
 		canvas.addEventListener('mousemove', ev => this.onMouseMove(ev));
+		canvas.addEventListener('contextmenu', ev => this.onContextMenu(ev));
 		document.addEventListener('keydown', ev => this.onKey(ev, true));
 		document.addEventListener('keyup', ev => this.onKey(ev, false));
 	}
@@ -146,6 +148,11 @@ export class Piano {
 	setOffset(n: number) {
 		this.offsetX = clamp(n, this.canvas.width - this.virtualWidth, 0);
 		this.render();
+	}
+
+	setMidiInput(midi?: MIDIInput) {
+		this.midiInput?.removeEventListener('midimessage', ev => this.onMidiMessage(ev as MIDIMessageEvent));
+		midi?.addEventListener('midimessage', ev => this.onMidiMessage(ev as MIDIMessageEvent));
 	}
 
 	onDown(note: string, velocity: number) {
@@ -162,16 +169,23 @@ export class Piano {
 		this.onKeyUp(note);
 	}
 
+	private onMidiMessage(ev: MIDIMessageEvent) {
+		const [pressed, midiNote, velocity] = ev.data;
+		const note = Note.fromMidiSharps(midiNote);
+		if (pressed == 144) this.onDown(note, velocity);
+		if (pressed == 128) this.onUp(note);
+	}
+
 	private layout() {
 		this.virtualWidth = 0;
 		this.whiteKeys = [];
 		this.blackKeys = [];
-		const whiteHeightPx = this.whiteHeightPx;
-		const whiteWidthPx = this.whiteHeightPx * whiteWidth / whiteHeight;
-		const blackHeightPx = this.whiteHeightPx * blackHeight / whiteHeight;
-		const blackWidthPx = this.whiteHeightPx * blackWidth / whiteHeight;
+		const whiteHeightPx = this.canvas.height;
+		const whiteWidthPx = whiteHeightPx * whiteWidth / whiteHeight;
+		const blackHeightPx = whiteHeightPx * blackHeight / whiteHeight;
+		const blackWidthPx = whiteHeightPx * blackWidth / whiteHeight;
 
-		let y = this.canvas.height - this.whiteHeightPx;
+		let y = this.canvas.height - whiteHeightPx;
 		for (let i = 0; i < 128; i++) {
 			const note = Note.fromMidiSharps(i);
 
@@ -256,7 +270,6 @@ export class Piano {
 		this.mouseHeld = note ?? '';
 	}
 
-
 	private onKey(ev: KeyboardEvent, isDown: boolean) {
 		const note = this.hotkeys[ev.key];
 		if (note) {
@@ -273,6 +286,10 @@ export class Piano {
 			}
 			ev.preventDefault();
 		}
+	}
+
+	private onContextMenu(ev: MouseEvent) {
+		ev.preventDefault();
 	}
 
 	private renderKey(key: Key) {

@@ -1,0 +1,19 @@
+.menu {
+	min-width: 8em;
+	border: 1px solid rgb(var(--color--border-100));
+	background: rgb(var(--color--background-100));
+	z-index: 99;
+	display: inline-block;
+}
+
+.flyout {
+	position: fixed;
+}
+
+.item {
+	padding: .5em;
+}
+
+.item:hover {
+	background: rgb(var(--color--active-100));
+}
