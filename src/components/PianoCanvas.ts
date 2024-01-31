@@ -1,4 +1,5 @@
-import { debounce, clamp } from '../Helpers';
+import { AutoResizeCanvas } from './AutoResizeCanvas';
+import { clamp } from '../Helpers';
 import { Note } from 'tonal';
 
 // Ratios.
@@ -109,14 +110,12 @@ class Key {
 	}
 };
 
-export class PianoCanvas {
+export class PianoCanvas extends AutoResizeCanvas {
 	offsetX = 0;
 	virtualWidth = 0;
 	virtualMiddle = 0;
 	loaded = false;
 
-	whiteHeightPx = 0;
-	blackHeightPx = 0;
 	whiteKeys: Key[] = [];
 	blackKeys: Key[] = [];
 
@@ -136,7 +135,7 @@ export class PianoCanvas {
 		public onKeyDown: (note: string, velocity: number) => void,
 		public onKeyUp: (note: string) => void,
 	) {
-		new ResizeObserver(debounce(() => this.onResize())).observe(canvas);
+		super(canvas);
 
 		canvas.addEventListener('wheel', ev => this.onWheel(ev));
 		canvas.addEventListener('mousedown', ev => this.onMouse(ev, true));
@@ -183,9 +182,9 @@ export class PianoCanvas {
 		this.virtualWidth = 0;
 		this.whiteKeys = [];
 		this.blackKeys = [];
-		const whiteHeightPx = this.whiteHeightPx = this.canvas.height;
+		const whiteHeightPx = this.canvas.height;
 		const whiteWidthPx = whiteHeightPx * whiteWidth / whiteHeight;
-		const blackHeightPx = this.blackHeightPx = whiteHeightPx * blackHeight / whiteHeight;
+		const blackHeightPx = whiteHeightPx * blackHeight / whiteHeight;
 		const blackWidthPx = whiteHeightPx * blackWidth / whiteHeight;
 
 		let y = this.canvas.height - whiteHeightPx;
@@ -210,17 +209,13 @@ export class PianoCanvas {
 		}
 	}
 
-	private onResize() {
-		const { canvas } = this;
-		const { width, height } = canvas.getBoundingClientRect();
-		canvas.width = width;
-		canvas.height = height;
-		console.log('onResize', width, height);
+	onResize() {
+		super.onResize();
 
 		this.layout();
 
 		if (!this.loaded) {
-			this.setOffset(width / 2 - this.virtualMiddle);
+			this.setOffset(this.canvas.width / 2 - this.virtualMiddle);
 			this.loaded = true;
 		}
 
@@ -239,41 +234,40 @@ export class PianoCanvas {
 		else this.onUp(note);
 	}
 
-	private getNote(ev: MouseEvent): string | undefined {
+	private getKey(ev: MouseEvent): Key | undefined {
 		const x = ev.offsetX - this.offsetX;
 		const y = ev.offsetY;
 		for (let i = 0; i < this.blackKeys.length; i++) {
 			const hitbox = this.blackKeys[i];
-			if (hitbox.contains(x, y)) return hitbox.note;
+			if (hitbox.contains(x, y)) return hitbox;
 		}
 		for (let i = 0; i < this.whiteKeys.length; i++) {
 			const hitbox = this.whiteKeys[i];
-			if (hitbox.contains(x, y)) return hitbox.note;
+			if (hitbox.contains(x, y)) return hitbox;
 		}
 	}
 
 	private onMouse(ev: MouseEvent, isDown: boolean) {
 		if (ev.button != 0) return;
 		ev.preventDefault();
-		const note = this.getNote(ev);
-		if (note) {
-			const isWhite = note[1] != '#';
-			const height = isWhite ? this.whiteHeightPx : this.blackHeightPx
-			const velocity = Math.max(10, ev.offsetY / height * 128);
-			this.onDownOrUp(note, isDown, velocity);
-			this.mouseHeld = isDown ? note : '';
+		const key = this.getKey(ev);
+		if (key) {
+			const percent = ev.offsetY / key.height;
+			const velocity = Math.max(10, percent * 128);
+			this.onDownOrUp(key.note, isDown, velocity);
+			this.mouseHeld = isDown ? key.note : '';
 		}
 	}
 
 	private onMouseMove(ev: MouseEvent) {
 		if (!(ev.buttons & 1)) return;
 		ev.preventDefault();
-		const note = this.getNote(ev);
-		if (this.mouseHeld != note) {
+		const key = this.getKey(ev);
+		if (this.mouseHeld != key?.note) {
 			this.onUp(this.mouseHeld);
-			if (note) this.onDownOrUp(note, true);
+			if (key) this.onDownOrUp(key?.note, true);
 		}
-		this.mouseHeld = note ?? '';
+		this.mouseHeld = key?.note ?? '';
 	}
 
 	private onKey(ev: KeyboardEvent, isDown: boolean) {

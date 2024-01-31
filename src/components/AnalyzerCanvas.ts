@@ -1,7 +1,7 @@
-import { debounce } from '../Helpers';
 import { getContext } from './PianoCanvas';
+import { AutoResizeCanvas } from './AutoResizeCanvas';
 
-export class AnalyzerCanvas {
+export class AnalyzerCanvas extends AutoResizeCanvas {
 	bufferLength: number;
 	dataArray: Uint8Array;
 
@@ -9,17 +9,9 @@ export class AnalyzerCanvas {
 		public canvas: HTMLCanvasElement,
 		public node: AnalyserNode
 	) {
-		new ResizeObserver(debounce(() => this.onResize())).observe(canvas);
-
+		super(canvas);
 		this.bufferLength = this.node.frequencyBinCount;
 		this.dataArray = new Uint8Array(this.bufferLength);
-	}
-
-	private onResize() {
-		const { canvas } = this;
-		const { width, height } = canvas.getBoundingClientRect();
-		canvas.width = width;
-		canvas.height = height;
 
 		requestAnimationFrame(() => this.render());
 	}

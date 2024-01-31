@@ -9,7 +9,9 @@ type Input = MIDIInput | undefined;
 export function Play() {
 	const [inputs, setInputs] = createSignal<Input[]>([]);
 	const [input, setInput] = createSignal<Input>();
-	var inputRef: HTMLCanvasElement | undefined;
+
+	let inputRef: HTMLCanvasElement | undefined;
+	let displayRef: HTMLCanvasElement | undefined;
 
 	onMount(async () => {
 		if (!inputRef) return;
@@ -77,6 +79,9 @@ export function Play() {
 			<main>
 				<ContextMenu menu={menu} onOpen={listMidi} class={styles.main}>
 					<div class={styles.display}>
+						<canvas ref={displayRef}>
+							No 2d context available
+						</canvas>
 					</div>
 					<canvas ref={inputRef} class={styles.input}>
 						No 2d context available
