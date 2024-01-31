@@ -158,6 +158,7 @@ export class PianoCanvas {
 	}
 
 	onDown(note: string, velocity: number) {
+		if (note in this.held && this.held[note] != 0) return;
 		this.held[note] = velocity;
 		this.render();
 		// User callback
