@@ -1,5 +1,5 @@
 import { onMount, createSignal, For, createEffect } from 'solid-js';
-import { Header, PianoCanvas, ContextMenu, Menu, MenuItem } from '../components';
+import { Header, PianoCanvas, ContextMenu, Menu, MenuItem, PianoDisplayCanvas } from '../components';
 import { PitchedPlayer, NoteUrlGain, Dynamic, dynamicToGain } from '../audio/PitchedPlayer';
 import { Note } from 'tonal';
 import styles from './Play.module.css';
@@ -14,7 +14,7 @@ export function Play() {
 	let displayRef: HTMLCanvasElement | undefined;
 
 	onMount(async () => {
-		if (!inputRef) return;
+		if (!inputRef || !displayRef) return;
 
 		const instrument = new PitchedPlayer();
 
@@ -39,13 +39,17 @@ export function Play() {
 
 		function onKeyDown(note: string, velocity: number) {
 			instrument.playNote(note, Math.min(velocity, 100));
+			display.keyDown(note, velocity);
 		}
 
 		function onKeyUp(note: string) {
 			instrument.stopNote(note);
+			display.keyUp(note);
 		}
 		const pianoCanvas = new PianoCanvas(inputRef, onKeyDown, onKeyUp);
 		createEffect(() => pianoCanvas.setMidiInput(input()));
+
+		const display = new PianoDisplayCanvas(displayRef, pianoCanvas);
 	});
 
 	function listMidi() {
@@ -78,11 +82,9 @@ export function Play() {
 			<Header />
 			<main>
 				<ContextMenu menu={menu} onOpen={listMidi} class={styles.main}>
-					<div class={styles.display}>
-						<canvas ref={displayRef}>
-							No 2d context available
-						</canvas>
-					</div>
+					<canvas ref={displayRef} class={styles.display}>
+						No 2d context available
+					</canvas>
 					<canvas ref={inputRef} class={styles.input}>
 						No 2d context available
 					</canvas>

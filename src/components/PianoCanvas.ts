@@ -95,7 +95,7 @@ export const leftRightMap = {
 	'?': 'G#7',
 } as { [k: string]: string };
 
-class Key {
+export class Key {
 	constructor(
 		public x: number,
 		public y: number,
@@ -180,8 +180,9 @@ export class PianoCanvas extends AutoResizeCanvas {
 
 	private layout() {
 		this.virtualWidth = 0;
-		this.whiteKeys = [];
-		this.blackKeys = [];
+		this.whiteKeys.length = 0;
+		this.blackKeys.length = 0;
+
 		const whiteHeightPx = this.canvas.height;
 		const whiteWidthPx = whiteHeightPx * whiteWidth / whiteHeight;
 		const blackHeightPx = whiteHeightPx * blackHeight / whiteHeight;
@@ -200,12 +201,8 @@ export class PianoCanvas extends AutoResizeCanvas {
 			const key = new Key(x, y, width, height, note);
 			(isWhite ? this.whiteKeys : this.blackKeys).push(key);
 
-			if (i == 60) {
-				this.virtualMiddle = this.virtualWidth + whiteWidthPx / 2;
-			}
-			if (isWhite) {
-				this.virtualWidth += whiteWidthPx;
-			}
+			if (i == 60) this.virtualMiddle = this.virtualWidth + whiteWidthPx / 2;
+			if (isWhite) this.virtualWidth += whiteWidthPx;
 		}
 	}
 
