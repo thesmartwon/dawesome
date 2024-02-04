@@ -35,7 +35,7 @@ export class PianoDisplayCanvas extends AutoResizeCanvas {
 		this.render();
 	}
 
-	keyDown(note: string, velocity: number) {
+	playNote(note: string, velocity: number) {
 		const isWhite = note[1] != '#';
 
 		const collection = isWhite ? this.pianoCanvas.whiteKeys : this.pianoCanvas.blackKeys;
@@ -48,7 +48,7 @@ export class PianoDisplayCanvas extends AutoResizeCanvas {
 		}
 	}
 
-	keyUp(note: string) {
+	stopNote(note: string) {
 		const collection = this.keys;
 		for (let i = 0; i < collection.length; i++) {
 			if (collection[i].note == note && collection[i].isDown == true) {

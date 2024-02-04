@@ -6,7 +6,11 @@ import { createSignal, createEffect, Switch, Match, onMount } from 'solid-js';
 import { IoVolumeHighOutline, IoVolumeMediumOutline, IoVolumeLowOutline, IoVolumeOffOutline } from 'solid-icons/io'
 import { AnalyzerCanvas } from './AnalyzerCanvas';
 
-export function Header() {
+export interface HeaderProps {
+	onToggle?(): void;
+	ref: HTMLElement | undefined;
+};
+export function Header(props: HeaderProps) {
 	const [volume, setVolume] = createSignal(globalGain.gain.value * 100);
 	let canvas: HTMLCanvasElement | undefined;
 
@@ -24,8 +28,8 @@ export function Header() {
 		activeClass: styles.active,
 	};
 	return (
-		<nav class={styles.nav}>
-			<OcThreebars2 size="1.5em" />
+		<nav class={styles.nav} ref={props.ref}>
+			<OcThreebars2 size="1.5em" onClick={props.onToggle} />
 			<A {...aprops} href="/play">Play</A>
 			<A {...aprops} href="/sequence">Sequence</A>
 			<A {...aprops} href="/arrange">Arrange</A>

@@ -15,3 +15,12 @@
 	height: 400px;
 	width: 100%;
 }
+
+.drawer {
+	position: fixed;
+	width: 20em;
+	height: 100%;
+	margin-top: 1em;
+	z-index: 10;
+	background: rgb(var(--color--background-100));
+}
