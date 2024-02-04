@@ -18,8 +18,10 @@ export function ContextMenu(props: ContextMenuProps) {
 	const unset = () => setPosition();
 	onMount(() => {
 		document.addEventListener('click', unset);
+		document.addEventListener('keydown', ev => ev.key == 'Escape' && unset());
 		onCleanup(() => {
 			document.removeEventListener('click', unset);
+			document.removeEventListener('keydown', ev => ev.key == 'Escape' && unset());
 		});
 	});
 

@@ -1,21 +1,17 @@
-import { onMount, createSignal, For, createEffect } from 'solid-js';
-import { Header, PianoCanvas, ContextMenu, Menu, MenuItem, PianoDisplayCanvas } from '../components';
+import { onMount, createSignal, For, createEffect, onCleanup } from 'solid-js';
+import { Header, PianoCanvas, ContextMenu, Menu, MenuItem, PianoDisplayCanvas, SelectMidi } from '../components';
 import { PitchedPlayer, NoteUrlGain, Dynamic, dynamicToGain } from '../audio/PitchedPlayer';
 import { Note } from 'tonal';
 import styles from './Play.module.css';
 
-type Input = MIDIInput | undefined;
-
 export function Play() {
-	const [inputs, setInputs] = createSignal<Input[]>([]);
-	const [input, setInput] = createSignal<Input>();
+	const [instrument, setInstrument] = createSignal<PitchedPlayer | undefined>();
+	const [inputCanvas, setInputCanvas] = createSignal<PianoCanvas | undefined>();
 
 	let inputRef: HTMLCanvasElement | undefined;
 	let displayRef: HTMLCanvasElement | undefined;
 
 	onMount(async () => {
-		if (!inputRef || !displayRef) return;
-
 		const instrument = new PitchedPlayer();
 
 		const base = SAMPLE_BASE;
@@ -35,53 +31,44 @@ export function Play() {
 			noteUrls.push({ freq, url, gain });
 		});
 
+		setInstrument(instrument);
 		await instrument.loadLayers(noteUrls);
+	});
+
+	createEffect(() => {
+		if (!inputRef || !displayRef || !instrument()) return;
 
 		function onKeyDown(note: string, velocity: number) {
-			instrument.playNote(note, Math.min(velocity, 100));
+			instrument()?.playNote(note, Math.min(velocity, 100));
 			display.keyDown(note, velocity);
 		}
 
 		function onKeyUp(note: string) {
-			instrument.stopNote(note);
+			instrument()?.stopNote(note);
 			display.keyUp(note);
 		}
-		const pianoCanvas = new PianoCanvas(inputRef, onKeyDown, onKeyUp);
-		createEffect(() => pianoCanvas.setMidiInput(input()));
 
-		const display = new PianoDisplayCanvas(displayRef, pianoCanvas);
+		const input = new PianoCanvas(inputRef, onKeyDown, onKeyUp);
+		const display = new PianoDisplayCanvas(displayRef, input);
+
+		setInputCanvas(input);
+		onCleanup(() => input.removeListeners());
 	});
-
-	function listMidi() {
-		navigator.requestMIDIAccess().then(m => {
-			const inputs: Input[] = [undefined];
-			for (const entry of m.inputs.values()) inputs.push(entry);
-			setInputs(inputs);
-		});
-	}
 
 	const menu = (
 		<Menu>
 			<MenuItem>
-				MIDI Device
-				<Menu isFlyout>
-					<For each={inputs()}>
-						{i =>
-							<MenuItem onClick={() => setInput(i)}>
-								{i ? i.name : 'None'}
-							</MenuItem>
-						}
-					</For>
-				</Menu>
+				<SelectMidi onSelect={d => inputCanvas()?.setMidiInput(d)} />
 			</MenuItem>
 		</Menu>
 	);
 
+	// onOpen={listMidi}
 	return (
 		<>
 			<Header />
 			<main>
-				<ContextMenu menu={menu} onOpen={listMidi} class={styles.main}>
+				<ContextMenu menu={menu} class={styles.main}>
 					<canvas ref={displayRef} class={styles.display}>
 						No 2d context available
 					</canvas>

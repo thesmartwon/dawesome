@@ -130,6 +130,9 @@ export class PianoCanvas extends AutoResizeCanvas {
 
 	midiInput?: MIDIInput;
 
+	onKeyDownListener: (ev: KeyboardEvent) => void;
+	onKeyUpListener: (ev: KeyboardEvent) => void;
+
 	constructor(
 		public canvas: HTMLCanvasElement,
 		public onKeyDown: (note: string, velocity: number) => void,
@@ -142,8 +145,16 @@ export class PianoCanvas extends AutoResizeCanvas {
 		canvas.addEventListener('mouseup', ev => this.onMouse(ev, false));
 		canvas.addEventListener('mousemove', ev => this.onMouseMove(ev));
 		canvas.addEventListener('contextmenu', ev => this.onContextMenu(ev));
-		document.addEventListener('keydown', ev => this.onKey(ev, true));
-		document.addEventListener('keyup', ev => this.onKey(ev, false));
+
+		this.onKeyDownListener = ev => this.onKey(ev, true);
+		this.onKeyUpListener = ev => this.onKey(ev, false);
+		document.addEventListener('keydown', this.onKeyDownListener);
+		document.addEventListener('keyup', this.onKeyUpListener);
+	}
+
+	removeListeners() {
+		document.removeEventListener('keydown', this.onKeyDownListener);
+		document.removeEventListener('keyup', this.onKeyUpListener);
 	}
 
 	setOffset(n: number) {
