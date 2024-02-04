@@ -11,4 +11,7 @@ export default defineConfig({
 	build: {
 		target: 'esnext',
 	},
+	define: {
+		SAMPLE_BASE: JSON.stringify('http://localhost:8888'),
+	}
 });

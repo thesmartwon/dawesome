@@ -18,7 +18,7 @@ export function Play() {
 
 		const instrument = new PitchedPlayer();
 
-		const base = 'https://samples.dawesome.io'
+		const base = SAMPLE_BASE;
 		const index = await fetch(`${base}/index.json`).then(res => res.json()) as any;
 		const sampleList = index.strings['Splendid Grand Piano'] as string[];
 		const noteUrls: NoteUrlGain[] = [];
