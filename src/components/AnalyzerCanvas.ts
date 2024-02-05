@@ -1,39 +1,34 @@
-import { getContext } from './PianoCanvas';
 import { AutoResizeCanvas } from './AutoResizeCanvas';
+import { globalAnalyzer } from '../audio/Player';
 
 export class AnalyzerCanvas extends AutoResizeCanvas {
-	bufferLength: number;
-	dataArray: Uint8Array;
+	dataArray: Uint8Array = new Uint8Array(0);
 
-	constructor(
-		public canvas: HTMLCanvasElement,
-		public node: AnalyserNode
-	) {
-		super(canvas);
-		this.bufferLength = this.node.frequencyBinCount;
-		this.dataArray = new Uint8Array(this.bufferLength);
+	constructor() {
+		super();
 
+		this.dataArray = new Uint8Array(globalAnalyzer.frequencyBinCount);
 		requestAnimationFrame(() => this.render());
 	}
 
 	render() {
-		const canvas = this.canvas;
-		const ctx = getContext(canvas);
+		const ctx = this.ctx();
 
 		ctx.fillStyle = "rgb(200, 200, 200)";
-		ctx.fillRect(0, 0, canvas.width, canvas.height);
+		ctx.fillRect(0, 0, this.width, this.height);
 
 		ctx.lineWidth = 2;
 		ctx.strokeStyle = "rgb(0, 0, 0)";
 		ctx.beginPath();
 
-		const sliceWidth = (canvas.width * 1.0) / this.bufferLength;
+		const bufferLength = this.dataArray.length;
+		const sliceWidth = (this.width * 1.0) / bufferLength;
 		let x = 0;
 
-		this.node.getByteTimeDomainData(this.dataArray);
-		for (let i = 0; i < this.bufferLength; i++) {
+		globalAnalyzer.getByteTimeDomainData(this.dataArray);
+		for (let i = 0; i < bufferLength; i++) {
 			const v = this.dataArray[i] / 128.0;
-			const y = (v * canvas.height) / 2;
+			const y = (v * this.height) / 2;
 
 			if (i === 0) {
 				ctx.moveTo(x, y);
@@ -44,9 +39,11 @@ export class AnalyzerCanvas extends AutoResizeCanvas {
 			x += sliceWidth;
 		}
 
-		ctx.lineTo(canvas.width, canvas.height / 2);
+		ctx.lineTo(this.width, this.height / 2);
 		ctx.stroke();
 
 		requestAnimationFrame(() => this.render());
 	}
 }
+
+customElements.define('daw-analyzer', AnalyzerCanvas, { extends: 'canvas' });

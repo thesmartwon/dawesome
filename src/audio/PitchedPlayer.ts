@@ -15,10 +15,15 @@ function closest(n: number, list: number[]): number {
 	return list.reduce((prev, cur) => Math.abs(cur - n) < Math.abs(prev - n) ? cur : prev);
 }
 
-/// This is how the MIDI association converts midi velocity [0..127] into gain [0..1]
-/// @see https://www.midi.org/specifications/file-format-specifications/dls-downloadable-sounds/dls-level-1
+// https://www.midi.org/specifications/file-format-specifications/dls-downloadable-sounds/dls-level-1
 export function midiVelToGain(vel: number) {
   return (vel * vel) / 16129; // 16129 = 127 * 127
+}
+
+function getFreq(note: string): number {
+	const res = Note.freq(note);
+	if (!res) throw new Error('could not parse frequency for note ' + note);
+	return res;
 }
 
 export type Dynamic = 'ppppp' | 'pppp' | 'ppp' | 'pp' | 'p' | 'mp' | 'mf' | 'f' | 'ff' | 'fff' | 'ffff';
@@ -83,22 +88,14 @@ export class PitchedPlayer extends Player {
 	}
 
 	playNote(note: string, velocity: number) {
-		const freq = Note.freq(note);
-		if (!freq) {
-			console.warn('could not parse frequency for note', note);
-			return;
-		}
+		const freq = getFreq(note);
 		const gain = midiVelToGain(velocity);
 
 		return this.playFreq(freq, gain);
 	}
 
 	stopNote(note: string) {
-		const freq = Note.freq(note);
-		if (!freq) {
-			console.warn('could not parse frequency for note', note);
-			return;
-		}
+		const freq = getFreq(note);
 
 		return this.stopFreq(freq);
 	}

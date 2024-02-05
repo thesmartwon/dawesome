@@ -1,17 +1,20 @@
-import { onMount, createSignal, createEffect, onCleanup, Show } from 'solid-js';
-import { Header, PianoCanvas, ContextMenu, Menu, MenuItem, PianoDisplayCanvas, SelectMidi, InstrumentSelect } from '../components';
+import { onMount, createSignal, createEffect, batch, Show } from 'solid-js';
+import { Header, ContextMenu, Menu, MenuItem, SelectMidi, InstrumentSelect, NoteDownEvent, NoteUpEvent, Piano } from '../components';
 import { PitchedPlayer, NoteUrlGain, Dynamic, dynamicToGain } from '../audio/PitchedPlayer';
+import { Player } from '../audio/Player';
 import { Note } from 'tonal';
 import styles from './Play.module.css';
 
-function createPlayer(index: SampleIndex, category: string, name: string): PitchedPlayer {
+type AnyPlayer = PitchedPlayer | Player;
+
+function createPlayer(index: SampleIndex, category: string, name: string): AnyPlayer {
+	const samples = index[category][name];
 	switch (category) {
-		case 'strings':
+		case 'strings': {
 			const res = new PitchedPlayer();
 
-			const sampleList = index[category][name] as string[];
 			const noteUrls: NoteUrlGain[] = [];
-			sampleList.forEach(sample => {
+			samples.forEach(sample => {
 				const note = sample.substring(3);
 				const freq = Note.freq(note);
 				if (!freq) {
@@ -25,31 +28,17 @@ function createPlayer(index: SampleIndex, category: string, name: string): Pitch
 			});
 			res.loadLayers(noteUrls);
 			return res;
+		}
+		case 'percussion': {
+			const res = new Player();
+			samples.forEach(s =>
+				res.loadUrl(s, `${SAMPLE_BASE}/${category}/${name}/${s}.ogg`)
+			);
+			return res;
+		}
 		default:
 			throw new Error ('dunno how to load instrument in ' + category);
 	}
-}
-
-type Player = PitchedPlayer;
-
-function createCanvases(player: Player, inputRef: HTMLCanvasElement, displayRef: HTMLCanvasElement) {
-	if (player instanceof PitchedPlayer) {
-		function onKeyDown(note: string, velocity: number) {
-			player.playNote(note, velocity);
-			display.playNote(note, velocity);
-		}
-
-		function onKeyUp(note: string) {
-			player.stopNote(note);
-			display.stopNote(note);
-		}
-
-		const input = new PianoCanvas(inputRef, onKeyDown, onKeyUp);
-		const display = new PianoDisplayCanvas(displayRef, input);
-
-		return { input, display }
-	}
-	throw new Error('dunno how to init canvases');
 }
 
 export interface PlayProps {
@@ -57,14 +46,13 @@ export interface PlayProps {
 };
 export function Play(props: PlayProps) {
 	const [player, setPlayer] = createSignal<Player | undefined>();
-	const [inputCanvas, setInputCanvas] = createSignal<PianoCanvas | undefined>();
+	const [midi, setMidi] = createSignal<MIDIInput | undefined>();
 	const [drawerOpen, setDrawerOpen] = createSignal<boolean>(false);
 	const [headerHeight, setHeaderHeight] = createSignal(0);
 	const [category, setCategory] = createSignal('strings');
 	const [name, setName] = createSignal('Splendid Grand Piano');
+	const [pianoRef, setPianoRef] = createSignal<Piano | undefined>();
 
-	let inputRef: HTMLCanvasElement | undefined;
-	let displayRef: HTMLCanvasElement | undefined;
 	let headerRef: HTMLElement | undefined;
 
 	onMount(() => {
@@ -81,20 +69,10 @@ export function Play(props: PlayProps) {
 		setPlayer(createPlayer(props.index, category(), name()));
 	});
 
-	createEffect(() => {
-		const p = player();
-		if (!inputRef || !displayRef || !p) return;
-
-		const { input } = createCanvases(p, inputRef, displayRef);
-
-		setInputCanvas(input);
-		onCleanup(() => input.removeListeners());
-	});
-
 	const menu = (
 		<Menu>
 			<MenuItem>
-				<SelectMidi onSelect={d => inputCanvas()?.setMidiInput(d)} />
+				<SelectMidi onSelect={setMidi} />
 			</MenuItem>
 		</Menu>
 	);
@@ -108,19 +86,44 @@ export function Play(props: PlayProps) {
 					<InstrumentSelect
 						index={props.index}
 						onSelect={(category, name) => {
-							setCategory(category);
-							setName(name);
+							batch(() => {
+								setCategory(category);
+								setName(name);
+							});
 						}}
 					/>
 				</aside>
 			</Show>
 			<main>
 				<ContextMenu menu={menu} class={styles.main}>
-					<canvas ref={displayRef} class={styles.display}>
-						No 2d context available
+					<canvas
+						is="daw-piano-played"
+						class={styles.display}
+						prop:piano={pianoRef()}
+					>
+						Canvas unsupported
 					</canvas>
-					<canvas ref={inputRef} class={styles.input}>
-						No 2d context available
+					<canvas
+						is="daw-piano"
+						ref={setPianoRef}
+						class={styles.input}
+						onNoteDown={(ev: NoteDownEvent) => {
+							const p = player();
+							if (!p) return;
+
+							const { note, velocity } = ev.detail;
+							if (p instanceof PitchedPlayer) p.playNote(note, velocity);
+						}}
+						onNoteUp={(ev: NoteUpEvent) => {
+							const p = player();
+							if (!p) return;
+
+							const { note } = ev.detail;
+							if (p instanceof PitchedPlayer) p.stopNote(note);
+						}}
+						prop:midi={midi()}
+					>
+						Canvas unsupported
 					</canvas>
 				</ContextMenu>
 			</main>

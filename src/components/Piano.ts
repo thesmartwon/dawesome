@@ -8,12 +8,6 @@ const whiteWidth = 2.2;
 const blackWidth = 1.5;
 const blackHeight = 7.2;
 
-export function getContext(canvas: HTMLCanvasElement) {
-	const ctx = canvas.getContext('2d');
-	if (!ctx) throw new Error('2d context not supported');
-	return ctx;
-}
-
 export const leftRightMap = {
 	// left hand
 	'1': 'C2',
@@ -110,7 +104,12 @@ export class Key {
 	}
 };
 
-export class PianoCanvas extends AutoResizeCanvas {
+export type NoteDownEvent = CustomEvent<{ note: string, velocity: number}>;
+export type NoteUpEvent = CustomEvent<{ note: string }>;
+
+export class Piano extends AutoResizeCanvas {
+	static observedAttributes = ['midi'];
+
 	offsetX = 0;
 	virtualWidth = 0;
 	virtualMiddle = 0;
@@ -128,78 +127,97 @@ export class PianoCanvas extends AutoResizeCanvas {
 		return acc;
 	}, {} as { [k: string]: string });
 
-	midiInput?: MIDIInput;
+	notedown: NoteDownEvent = new CustomEvent('notedown', {
+		bubbles: true,
+		detail: {
+			note: '',
+			velocity: 0,
+		},
+	});
 
-	onKeyDownListener: (ev: KeyboardEvent) => void;
-	onKeyUpListener: (ev: KeyboardEvent) => void;
+	noteup: NoteUpEvent = new CustomEvent('noteup', {
+		bubbles: true,
+		detail: {
+			note: '',
+		},
+	});
 
-	constructor(
-		public canvas: HTMLCanvasElement,
-		public onKeyDown: (note: string, velocity: number) => void,
-		public onKeyUp: (note: string) => void,
-	) {
-		super(canvas);
+	boundKeyDown;
+	boundKeyUp;
+	cleanupMidi = () => {};
 
-		canvas.addEventListener('wheel', ev => this.onWheel(ev));
-		canvas.addEventListener('mousedown', ev => this.onMouse(ev, true));
-		canvas.addEventListener('mouseup', ev => this.onMouse(ev, false));
-		canvas.addEventListener('mousemove', ev => this.onMouseMove(ev));
-		canvas.addEventListener('contextmenu', ev => this.onContextMenu(ev));
-
-		this.onKeyDownListener = ev => this.onKey(ev, true);
-		this.onKeyUpListener = ev => this.onKey(ev, false);
-		document.addEventListener('keydown', this.onKeyDownListener);
-		document.addEventListener('keyup', this.onKeyUpListener);
+	constructor() {
+		super();
+		this.boundKeyDown = this.onKeyDown.bind(this);
+		this.boundKeyUp = this.onKeyUp.bind(this);
 	}
 
-	removeListeners() {
-		document.removeEventListener('keydown', this.onKeyDownListener);
-		document.removeEventListener('keyup', this.onKeyUpListener);
-	}
+	connectedCallback() {
+		this.addEventListener('wheel', ev => this.onWheel(ev));
+		this.addEventListener('mousedown', ev => this.onMouse(ev, true));
+		this.addEventListener('mouseup', ev => this.onMouse(ev, false));
+		this.addEventListener('mousemove', ev => this.onMouseMove(ev));
 
-	setOffset(n: number) {
-		this.offsetX = clamp(n, this.canvas.width - this.virtualWidth, 0);
+		document.addEventListener('keydown', this.boundKeyDown);
+		document.addEventListener('keyup', this.boundKeyUp);
+
 		this.render();
 	}
 
-	setMidiInput(midi?: MIDIInput) {
-		this.midiInput?.removeEventListener('midimessage', ev => this.onMidiMessage(ev as MIDIMessageEvent));
-		midi?.addEventListener('midimessage', ev => this.onMidiMessage(ev as MIDIMessageEvent));
+	disconnectedCallback() {
+		document.removeEventListener('keydown', this.boundKeyDown);
+		document.removeEventListener('keyup', this.boundKeyUp);
+	}
+
+	setOffset(n: number) {
+		this.offsetX = clamp(n, this.width - this.virtualWidth, 0);
+		this.render();
+	}
+
+	set midi(m: MIDIInput | undefined) {
+		this.cleanupMidi();
+		const boundMidi = (ev: Event) => {
+			if (!('data' in ev)) return;
+			const [pressed, midiNote, velocity] = (ev as MIDIMessageEvent).data;
+			const note = Note.fromMidiSharps(midiNote);
+			if (pressed == 144) this.onDown(note, velocity);
+			if (pressed == 128) this.onUp(note);
+		}
+		m?.addEventListener('midimessage', boundMidi);
+		this.cleanupMidi = () => m?.removeEventListener('midimessage', boundMidi);
 	}
 
 	onDown(note: string, velocity: number) {
 		if (note in this.held && this.held[note] != 0) return;
 		this.held[note] = velocity;
 		this.render();
-		// User callback
-		this.onKeyDown(note, velocity);
+
+		const event = this.notedown;
+		event.detail.note = note;
+		event.detail.velocity = velocity;
+		this.dispatchEvent(event);
 	}
 
 	onUp(note: string) {
 		this.held[note] = 0;
 		this.render();
-		// User callback
-		this.onKeyUp(note);
+
+		const event = this.noteup;
+		event.detail.note = note;
+		this.dispatchEvent(event);
 	}
 
-	private onMidiMessage(ev: MIDIMessageEvent) {
-		const [pressed, midiNote, velocity] = ev.data;
-		const note = Note.fromMidiSharps(midiNote);
-		if (pressed == 144) this.onDown(note, velocity);
-		if (pressed == 128) this.onUp(note);
-	}
-
-	private layout() {
+	layout() {
 		this.virtualWidth = 0;
 		this.whiteKeys.length = 0;
 		this.blackKeys.length = 0;
 
-		const whiteHeightPx = this.canvas.height;
+		const whiteHeightPx = this.height;
 		const whiteWidthPx = whiteHeightPx * whiteWidth / whiteHeight;
 		const blackHeightPx = whiteHeightPx * blackHeight / whiteHeight;
 		const blackWidthPx = whiteHeightPx * blackWidth / whiteHeight;
 
-		let y = this.canvas.height - whiteHeightPx;
+		let y = this.height - whiteHeightPx;
 		for (let i = 0; i < 128; i++) {
 			const note = Note.fromMidiSharps(i);
 
@@ -223,26 +241,26 @@ export class PianoCanvas extends AutoResizeCanvas {
 		this.layout();
 
 		if (!this.loaded) {
-			this.setOffset(this.canvas.width / 2 - this.virtualMiddle);
+			this.setOffset(this.width / 2 - this.virtualMiddle);
 			this.loaded = true;
 		}
 
 		this.render();
 	}
 
-	private onWheel(ev: WheelEvent) {
+	onWheel(ev: WheelEvent) {
 		ev.preventDefault();
 		const dir = ev.deltaY;
 		this.setOffset(this.offsetX - dir);
 		this.render();
 	}
 
-	private onDownOrUp(note: string, isDown: boolean, velocity = 100) {
+	onDownOrUp(note: string, isDown: boolean, velocity = 100) {
 		if (isDown) this.onDown(note, velocity);
 		else this.onUp(note);
 	}
 
-	private getKey(ev: MouseEvent): Key | undefined {
+	getKey(ev: MouseEvent): Key | undefined {
 		const x = ev.offsetX - this.offsetX;
 		const y = ev.offsetY;
 		for (let i = 0; i < this.blackKeys.length; i++) {
@@ -255,7 +273,7 @@ export class PianoCanvas extends AutoResizeCanvas {
 		}
 	}
 
-	private onMouse(ev: MouseEvent, isDown: boolean) {
+	onMouse(ev: MouseEvent, isDown: boolean) {
 		if (ev.button != 0) return;
 		ev.preventDefault();
 		const key = this.getKey(ev);
@@ -267,7 +285,7 @@ export class PianoCanvas extends AutoResizeCanvas {
 		}
 	}
 
-	private onMouseMove(ev: MouseEvent) {
+	onMouseMove(ev: MouseEvent) {
 		if (!(ev.buttons & 1)) return;
 		ev.preventDefault();
 		const key = this.getKey(ev);
@@ -278,7 +296,15 @@ export class PianoCanvas extends AutoResizeCanvas {
 		this.mouseHeld = key?.note ?? '';
 	}
 
-	private onKey(ev: KeyboardEvent, isDown: boolean) {
+	onKeyDown(ev: KeyboardEvent) {
+		this.onKey(ev, true);
+	}
+
+	onKeyUp(ev: KeyboardEvent) {
+		this.onKey(ev, false);
+	}
+
+	onKey(ev: KeyboardEvent, isDown: boolean) {
 		const note = this.hotkeys[ev.key];
 		if (note) {
 			this.onDownOrUp(note, isDown);
@@ -296,12 +322,8 @@ export class PianoCanvas extends AutoResizeCanvas {
 		}
 	}
 
-	private onContextMenu(ev: MouseEvent) {
-		ev.preventDefault();
-	}
-
-	private renderKey(key: Key) {
-		const ctx = getContext(this.canvas);
+	renderKey(key: Key) {
+		const ctx = this.ctx();
 		const isWhite = key.note[1] != '#';
 
 		let { x, y, width, height, note } = key;
@@ -324,8 +346,8 @@ export class PianoCanvas extends AutoResizeCanvas {
 		}
 	}
 
-	private renderKeys() {
-		const ctx = getContext(this.canvas);
+	renderKeys() {
+		const ctx = this.ctx();
 		if (ctx.canvas.width == 0 || ctx.canvas.height == 0) return;
 
 		ctx.strokeStyle = 'gray';
@@ -340,3 +362,5 @@ export class PianoCanvas extends AutoResizeCanvas {
 		requestAnimationFrame(() => this.renderKeys());
 	}
 }
+
+customElements.define('daw-piano', Piano, { extends: 'canvas' });

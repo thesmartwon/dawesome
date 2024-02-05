@@ -1,5 +1,5 @@
 import { AutoResizeCanvas } from './AutoResizeCanvas';
-import { PianoCanvas, Key, getContext } from './PianoCanvas';
+import { Piano, Key, NoteDownEvent, NoteUpEvent } from './Piano';
 
 class DisplayKey extends Key {
 	constructor(
@@ -18,27 +18,46 @@ class DisplayKey extends Key {
 	}
 }
 
-export class PianoDisplayCanvas extends AutoResizeCanvas {
+export class PianoDisplay extends AutoResizeCanvas {
 	// Percent per second
 	speed = 0.2;
-	prevTime: DOMHighResTimeStamp;
+	prevTime: DOMHighResTimeStamp = performance.now();
 
 	keys: DisplayKey[] = [];
 
-	constructor(
-		public canvas: HTMLCanvasElement,
-		public pianoCanvas: PianoCanvas,
-	) {
-		super(canvas);
+	_piano?: Piano;
+	cleanup = () => {};
 
+	set piano(p: Piano) {
+		this._piano = p;
+		this.keys = [];
+		const noteDown = (ev: NoteDownEvent) => {
+			const { note, velocity } = ev.detail;
+			this.onNoteDown(note, velocity);
+		};
+		const noteUp = (ev: NoteUpEvent) => {
+			const { note } = ev.detail;
+			this.onNoteUp(note);
+		};
+		this.cleanup();
+		p.addEventListener('notedown', noteDown);
+		p.addEventListener('noteup', noteUp);
+		this.cleanup = () => {
+			p.removeEventListener('notedown', noteDown);
+			p.removeEventListener('noteup', noteUp);
+		};
+	}
+
+	connectedCallback() {
 		this.prevTime = performance.now();
 		this.render();
 	}
 
-	playNote(note: string, velocity: number) {
+	onNoteDown(note: string, velocity: number) {
+		if (!this._piano) return;
 		const isWhite = note[1] != '#';
 
-		const collection = isWhite ? this.pianoCanvas.whiteKeys : this.pianoCanvas.blackKeys;
+		const collection = isWhite ? this._piano.whiteKeys : this._piano.blackKeys;
 
 		for (let i = 0; i < collection.length; i++) {
 			if (collection[i].note == note) {
@@ -48,7 +67,7 @@ export class PianoDisplayCanvas extends AutoResizeCanvas {
 		}
 	}
 
-	stopNote(note: string) {
+	onNoteUp(note: string) {
 		const collection = this.keys;
 		for (let i = 0; i < collection.length; i++) {
 			if (collection[i].note == note && collection[i].isDown == true) {
@@ -59,11 +78,13 @@ export class PianoDisplayCanvas extends AutoResizeCanvas {
 	}
 
 	private renderKey(key: Key) {
-		const ctx = getContext(this.canvas);
+		if (!this._piano) return;
+
+		const ctx = this.ctx();
 		const isWhite = key.note[1] != '#';
 
 		let { x, y, width, height, isDown } = key;
-		x += this.pianoCanvas.offsetX;
+		x += this._piano.offsetX;
 		if (x + width < 0 || x > ctx.canvas.width) return;
 
 		ctx.fillStyle = isWhite ? 'white' : 'black';
@@ -77,7 +98,7 @@ export class PianoDisplayCanvas extends AutoResizeCanvas {
 
 	private renderKeys(time: DOMHighResTimeStamp) {
 		const dt = (time - this.prevTime) / 1000;
-		const ctx = getContext(this.canvas);
+		const ctx = this.ctx();
 		if (ctx.canvas.width == 0 || ctx.canvas.height == 0) return;
 
 		ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
@@ -99,3 +120,5 @@ export class PianoDisplayCanvas extends AutoResizeCanvas {
 		requestAnimationFrame(this.renderKeys.bind(this));
 	}
 }
+
+customElements.define('daw-piano-played', PianoDisplay, { extends: 'canvas' });
