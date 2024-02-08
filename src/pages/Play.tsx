@@ -1,5 +1,5 @@
-import { onMount, createSignal, createEffect, batch, Show } from 'solid-js';
-import { Header, ContextMenu, Menu, MenuItem, SelectMidi, InstrumentSelect, NoteDownEvent, NoteUpEvent, Piano } from '../components';
+import { onMount, createSignal, batch, Show, Switch, Match, createMemo } from 'solid-js';
+import { Header, ContextMenu, Menu, MenuItem, SelectMidi, InstrumentSelect, Piano, Drums } from '../components';
 import { PitchedPlayer, NoteUrlGain, Dynamic, dynamicToGain } from '../audio/PitchedPlayer';
 import { Player } from '../audio/Player';
 import { Note } from 'tonal';
@@ -41,17 +41,33 @@ function createPlayer(index: SampleIndex, category: string, name: string): AnyPl
 	}
 }
 
+interface InstrumentProps {
+	name: string;
+	player?: Player;
+	midi?: MIDIInput;
+};
+function Instrument(props: InstrumentProps) {
+	return (
+		<Switch>
+			<Match when={props.player instanceof PitchedPlayer}>
+				<Piano player={props.player as PitchedPlayer} midi={props.midi} />
+			</Match>
+			<Match when={props.player instanceof Player}>
+				<Drums player={props.player as Player} midi={props.midi} name={props.name} />
+			</Match>
+		</Switch>
+	);
+}
+
 export interface PlayProps {
 	index?: SampleIndex;
 };
 export function Play(props: PlayProps) {
-	const [player, setPlayer] = createSignal<Player | undefined>();
 	const [midi, setMidi] = createSignal<MIDIInput | undefined>();
 	const [drawerOpen, setDrawerOpen] = createSignal<boolean>(false);
 	const [headerHeight, setHeaderHeight] = createSignal(0);
 	const [category, setCategory] = createSignal('strings');
 	const [name, setName] = createSignal('Splendid Grand Piano');
-	const [pianoRef, setPianoRef] = createSignal<Piano | undefined>();
 
 	let headerRef: HTMLElement | undefined;
 
@@ -63,10 +79,10 @@ export function Play(props: PlayProps) {
 		setHeaderHeight(height + parseFloat(margin) * 2);
 	});
 
-	createEffect(() => {
+	const player = createMemo(() => {
 		if (!props.index) return;
 
-		setPlayer(createPlayer(props.index, category(), name()));
+		return createPlayer(props.index, category(), name());
 	});
 
 	const menu = (
@@ -96,35 +112,7 @@ export function Play(props: PlayProps) {
 			</Show>
 			<main>
 				<ContextMenu menu={menu} class={styles.main}>
-					<canvas
-						is="daw-piano-played"
-						class={styles.display}
-						prop:piano={pianoRef()}
-					>
-						Canvas unsupported
-					</canvas>
-					<canvas
-						is="daw-piano"
-						ref={setPianoRef}
-						class={styles.input}
-						onNoteDown={(ev: NoteDownEvent) => {
-							const p = player();
-							if (!p) return;
-
-							const { note, velocity } = ev.detail;
-							if (p instanceof PitchedPlayer) p.playNote(note, velocity);
-						}}
-						onNoteUp={(ev: NoteUpEvent) => {
-							const p = player();
-							if (!p) return;
-
-							const { note } = ev.detail;
-							if (p instanceof PitchedPlayer) p.stopNote(note);
-						}}
-						prop:midi={midi()}
-					>
-						Canvas unsupported
-					</canvas>
+					<Instrument player={player()} midi={midi()} name={name()} />
 				</ContextMenu>
 			</main>
 		</>

@@ -53,9 +53,11 @@ type SampleOptions = {
 	decaySeconds: number;
 };
 
+export type Samples ={ [k: string]: AudioBuffer | null };
 // Queues samples and plays them.
 export class Player {
-	samples: { [k: string]: AudioBuffer } = {};
+	samples: Samples = {};
+	onLoaded: (name: string, buffer: AudioBuffer) => void = () => {};
 
 	constructor(
 		public ctx = globalCtx,
@@ -64,11 +66,13 @@ export class Player {
 
 	async loadUrl(name: string, url: string) {
 		if (name in this.samples) return;
+		this.samples[name] = null; // loading state
 		const response = await fetch(url);
 		if (response.status !== 200) throw new Error('Response code ' + response.status);
 		const audioData = await response.arrayBuffer();
 		const buffer = await this.ctx.decodeAudioData(audioData);
 		this.samples[name] = buffer;
+		this.onLoaded(name, buffer);
 	}
 
 	play(name: string, options?: Partial<SampleOptions>) {

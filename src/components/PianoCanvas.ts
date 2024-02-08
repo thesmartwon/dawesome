@@ -107,7 +107,7 @@ export class Key {
 export type NoteDownEvent = CustomEvent<{ note: string, velocity: number}>;
 export type NoteUpEvent = CustomEvent<{ note: string }>;
 
-export class Piano extends AutoResizeCanvas {
+export class PianoCanvas extends AutoResizeCanvas {
 	static observedAttributes = ['midi'];
 
 	offsetX = 0;
@@ -363,4 +363,4 @@ export class Piano extends AutoResizeCanvas {
 	}
 }
 
-customElements.define('daw-piano', Piano, { extends: 'canvas' });
+customElements.define('daw-piano', PianoCanvas, { extends: 'canvas' });

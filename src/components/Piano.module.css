@@ -1,0 +1,11 @@
+.played {
+	flex-grow: 1;
+	height: 100px;
+	width: 100%;
+}
+
+.piano {
+	height: 400px;
+	width: 100%;
+}
+

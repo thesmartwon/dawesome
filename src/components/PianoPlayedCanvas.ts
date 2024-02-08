@@ -1,5 +1,5 @@
 import { AutoResizeCanvas } from './AutoResizeCanvas';
-import { Piano, Key, NoteDownEvent, NoteUpEvent } from './Piano';
+import { PianoCanvas, Key, NoteDownEvent, NoteUpEvent } from './PianoCanvas';
 
 class DisplayKey extends Key {
 	constructor(
@@ -18,17 +18,17 @@ class DisplayKey extends Key {
 	}
 }
 
-export class PianoDisplay extends AutoResizeCanvas {
+export class PianoPlayedCanvas extends AutoResizeCanvas {
 	// Percent per second
 	speed = 0.2;
 	prevTime: DOMHighResTimeStamp = performance.now();
 
 	keys: DisplayKey[] = [];
 
-	_piano?: Piano;
+	_piano?: PianoCanvas;
 	cleanup = () => {};
 
-	set piano(p: Piano) {
+	set piano(p: PianoCanvas) {
 		this._piano = p;
 		this.keys = [];
 		const noteDown = (ev: NoteDownEvent) => {
@@ -121,4 +121,4 @@ export class PianoDisplay extends AutoResizeCanvas {
 	}
 }
 
-customElements.define('daw-piano-played', PianoDisplay, { extends: 'canvas' });
+customElements.define('daw-piano-played', PianoPlayedCanvas, { extends: 'canvas' });

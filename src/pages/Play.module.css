@@ -5,17 +5,6 @@
 	flex-direction: column;
 }
 
-.display {
-	flex-grow: 1;
-	height: 100px;
-	width: 100%;
-}
-
-.input {
-	height: 400px;
-	width: 100%;
-}
-
 .drawer {
 	position: fixed;
 	width: 20em;
