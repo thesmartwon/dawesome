@@ -13,8 +13,9 @@ export function Drums(props: DrumsProps) {
 	const [samples, setSamples] = createStore<Samples>({});
 	createEffect(() => {
 		setSamples(reconcile(props.player.samples));
-		props.player.onLoaded = () => {
-			setSamples(reconcile(props.player.samples));
+		const watching = props.player;
+		props.player.onLoaded = (name, buffer) => {
+			if (watching === props.player) setSamples(name, buffer);
 		};
 	});
 

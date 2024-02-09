@@ -307,6 +307,7 @@ export class PianoCanvas extends AutoResizeCanvas {
 	onKey(ev: KeyboardEvent, isDown: boolean) {
 		const note = this.hotkeys[ev.key];
 		if (note) {
+			ev.preventDefault();
 			this.onDownOrUp(note, isDown);
 
 			if (!isDown) {
@@ -318,7 +319,6 @@ export class PianoCanvas extends AutoResizeCanvas {
 				const upperNote = this.hotkeys[upperCaseHotkey];
 				if (upperNote && upperNote != note) this.onUp(upperNote);
 			}
-			ev.preventDefault();
 		}
 	}
 

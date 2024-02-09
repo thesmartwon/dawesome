@@ -1,4 +1,4 @@
-import { onMount, createSignal, batch, Show, Switch, Match, createMemo } from 'solid-js';
+import { onMount, createSignal, batch, Show, Switch, Match, createMemo, onCleanup } from 'solid-js';
 import { Header, ContextMenu, Menu, MenuItem, SelectMidi, InstrumentSelect, Piano, Drums } from '../components';
 import { PitchedPlayer, NoteUrlGain, Dynamic, dynamicToGain } from '../audio/PitchedPlayer';
 import { Player } from '../audio/Player';
@@ -71,12 +71,24 @@ export function Play(props: PlayProps) {
 
 	let headerRef: HTMLElement | undefined;
 
+	function onKeyDown(ev: KeyboardEvent) {
+		if (ev.key == 'Escape' && drawerOpen()) {
+			ev.preventDefault();
+			setDrawerOpen(false);
+		}
+	}
+
 	onMount(() => {
 		if (!headerRef) return;
 
 		const height = headerRef.getBoundingClientRect().height;
 		const margin = getComputedStyle(headerRef).margin;
 		setHeaderHeight(height + parseFloat(margin) * 2);
+	});
+
+	onMount(() => {
+		document.addEventListener('keydown', onKeyDown);
+		onCleanup(() => document.removeEventListener('keydown', onKeyDown));
 	});
 
 	const player = createMemo(() => {
