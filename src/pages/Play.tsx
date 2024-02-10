@@ -117,6 +117,7 @@ export function Play(props: PlayProps) {
 							batch(() => {
 								setCategory(category);
 								setName(name);
+								setDrawerOpen(false);
 							});
 						}}
 					/>

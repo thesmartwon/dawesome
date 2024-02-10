@@ -1,0 +1,39 @@
+.drums {
+	display: flex;
+	height: 100%;
+	flex-direction: column;
+}
+
+.played {
+	flex: 1;
+}
+
+.drumKit {
+	display: flex;
+}
+
+.drumKitKit {
+	width: 64em;
+}
+
+.drumKitKit > svg {
+	width: 64em;
+	position: absolute;
+}
+
+.drumKitKit > svg > ellipse {
+	transform-box: fill-box;
+	transform-origin: center;
+}
+
+.pad {
+	flex: 1;
+}
+
+.text {
+	font-size: 32px;
+	text-anchor: middle;
+	fill: black;
+	fill-opacity: 1;
+	stroke-width: 0;
+}
