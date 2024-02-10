@@ -192,7 +192,12 @@ export function Drums(props: DrumsProps) {
 						<For each={Object.entries(kitPiecies)}>
 							{([kitPiece, details]) =>
 								<>
-									<text class={styles.text} dominant-baseline="middle" x={details.center.x} y={details.center.y}>
+									<text
+										class={styles.text}
+										dominant-baseline="middle"
+										x={details.center.x}
+										y={details.center.y + ((kitPiece == 'hat' && !hatOpen()) ? 18 : 0)}
+									>
 										{hotkeyName(kitHotkeys[kitPiece])}
 									</text>
 									<path
