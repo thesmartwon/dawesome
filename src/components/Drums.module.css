@@ -31,9 +31,10 @@
 }
 
 .text {
-	font-size: 40px;
+	font-size: 32px;
 	text-anchor: middle;
 	fill: black;
 	fill-opacity: 1;
 	stroke-width: 0;
+	user-select: none;
 }

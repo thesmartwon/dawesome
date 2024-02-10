@@ -204,6 +204,7 @@ export function Drums(props: DrumsProps) {
 										d={details.path}
 										transform={details?.transform}
 										onMouseDown={(ev: MouseEvent) => {
+											if (ev.button != 0) return;
 											let sample = kitPiece;
 											if (kitPiece == 'hat') {
 												sample = hatOpen() ? 'hat-open' : 'hat-closed';
