@@ -192,6 +192,9 @@ export function Drums(props: DrumsProps) {
 						<For each={Object.entries(kitPiecies)}>
 							{([kitPiece, details]) =>
 								<>
+									<text class={styles.text} dominant-baseline="middle" x={details.center.x} y={details.center.y}>
+										{hotkeyName(kitHotkeys[kitPiece])}
+									</text>
 									<path
 										d={details.path}
 										transform={details?.transform}
@@ -203,9 +206,6 @@ export function Drums(props: DrumsProps) {
 											playSample()(ev, sample);
 										}}
 									/>
-									<text class={styles.text} dominant-baseline="middle" x={details.center.x} y={details.center.y}>
-										{hotkeyName(kitHotkeys[kitPiece])}
-									</text>
 								</>
 							}
 						</For>
