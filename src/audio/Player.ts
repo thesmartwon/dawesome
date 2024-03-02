@@ -79,7 +79,7 @@ export class Player {
 		const opts: SampleOptions = {
 			 gain: options?.gain ?? 1,
 			 detuneCents: options?.detuneCents ?? 0,
-			 decaySeconds: options?.decaySeconds ?? 1,
+			 decaySeconds: options?.decaySeconds ?? 0.7,
 		};
 		if (!(name in this.samples)) {
 			console.warn('not playing unknown sample', name);

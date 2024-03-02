@@ -1,14 +1,7 @@
-import { onMount, createSignal, For, createEffect } from 'solid-js';
+import { onMount, createSignal, For, createEffect, onCleanup } from 'solid-js';
 import { Menu, MenuItem } from '../components';
 
 type Input = MIDIInput | undefined;
-
-async function listInputs(): Promise<Input[]> {
-	const res: Input[] = [undefined];
-	const m = await navigator.requestMIDIAccess();
-	for (const entry of m.inputs.values()) res.push(entry);
-	return res;
-}
 
 interface SelectMidiProps {
 	onSelect(input: Input): void;
@@ -16,11 +9,28 @@ interface SelectMidiProps {
 export function SelectMidi(props: SelectMidiProps) {
 	const [inputs, setInputs] = createSignal<Input[]>([]);
 	const [input, setInput] = createSignal<Input>();
+	const [midi, setMidi] = createSignal<MIDIAccess | undefined>();
 
 	createEffect(() => props.onSelect(input()));
 
+	function updateInputs() {
+		const m = midi();
+		if (!m) return;
+		const res: Input[] = [undefined];
+		for (const entry of m.inputs.values()) res.push(entry);
+		setInputs(res);
+	}
 	onMount(() => {
-		listInputs().then(setInputs);
+		navigator.requestMIDIAccess().then(m => {
+			m.addEventListener('statechange', updateInputs);
+			setMidi(m); // to later removeEventListener
+			updateInputs();
+		});
+	});
+	onCleanup(() => {
+		const m = midi();
+		if (!m) return;
+		m.removeEventListener('statechange', updateInputs);
 	});
 
 	return (

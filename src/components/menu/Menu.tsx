@@ -1,4 +1,4 @@
-import { JSX, createSignal, onCleanup, onMount, Show } from 'solid-js';
+import { JSX, createSignal, onCleanup, onMount, Show, createEffect } from 'solid-js';
 import styles from './Menu.module.css';
 
 export interface ContextMenuProps extends JSX.HTMLAttributes<HTMLUListElement> {

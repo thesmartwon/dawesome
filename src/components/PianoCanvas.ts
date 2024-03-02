@@ -10,83 +10,83 @@ const blackHeight = 7.2;
 
 export const leftRightMap = {
 	// left hand
-	'1': 'C2',
-	'!': 'C#2',
-	'2': 'D2',
-	'@': 'D#2',
-	'3': 'E2',
-	'4': 'F2',
-	'$': 'F#2',
-	'5': 'G2',
-	'%': 'G#2',
+	'Digit1': 'C2',
+	'Shift+Digit1': 'C#2',
+	'Digit2': 'D2',
+	'Shift+Digit2': 'D#2',
+	'Digit3': 'E2',
+	'Digit4': 'F2',
+	'Shift+Digit4': 'F#2',
+	'Digit5': 'G2',
+	'Shift+Digit5': 'G#2',
 
-	'q': 'A2',
-	'Q': 'A#2',
-	'w': 'B2',
-	'e': 'C3',
-	'E': 'C#3',
-	'r': 'D3',
-	'R': 'D#3',
-	't': 'E3',
+	'KeyQ': 'A2',
+	'Shift+KeyQ': 'A#2',
+	'KeyW': 'B2',
+	'KeyE': 'C3',
+	'Shift+KeyE': 'C#3',
+	'KeyR': 'D3',
+	'Shift+KeyR': 'D#3',
+	'KeyT': 'E3',
 
-	'a': 'F3',
-	'A': 'F#3',
-	's': 'G3',
-	'S': 'G#3',
-	'd': 'A3',
-	'D': 'A#3',
-	'f': 'B3',
-	'g': 'C4',
-	'G': 'C#4',
+	'KeyA': 'F3',
+	'Shift+KeyA': 'F#3',
+	'KeyS': 'G3',
+	'Shift+KeyS': 'G#3',
+	'KeyD': 'A3',
+	'Shift+KeyD': 'A#3',
+	'KeyF': 'B3',
+	'KeyG': 'C4',
+	'Shift+KeyG': 'C#4',
 
-	'z': 'D4',
-	'Z': 'D#4',
-	'x': 'E4',
-	'c': 'F4',
-	'C': 'F#4',
-	'v': 'G4',
-	'V': 'G#4',
-	'b': 'A4',
-	'B': 'A#4',
+	'KeyZ': 'D4',
+	'Shift+KeyZ': 'D#4',
+	'KeyX': 'E4',
+	'KeyC': 'F4',
+	'Shift+KeyC': 'F#4',
+	'KeyV': 'G4',
+	'Shift+KeyV': 'G#4',
+	'KeyB': 'A4',
+	'Shift+KeyB': 'A#4',
 
 	// right hand
-	'6': 'B4',
-	'7': 'C5',
-	'&': 'C#5',
-	'8': 'D5',
-	'*': 'D#5',
-	'9': 'E5',
-	'0': 'F5',
-	')': 'F#5',
+	'Digit6': 'B4',
+	'Digit7': 'C5',
+	'Shift+Digit7': 'C#5',
+	'Digit8': 'D5',
+	'Shift+Digit8': 'D#5',
+	'Digit9': 'E5',
+	'Digit0': 'F5',
+	'Shift+Digit0': 'F#5',
 
-	'y': 'G5',
-	'Y': 'G#5',
-	'u': 'A5',
-	'U': 'A#5',
-	'i': 'B5',
-	'o': 'C6',
-	'O': 'C#6',
-	'p': 'D6',
-	'P': 'D#6',
+	'KeyY': 'G5',
+	'Shift+KeyY': 'G#5',
+	'KeyU': 'A5',
+	'Shift+KeyU': 'A#5',
+	'KeyI': 'B5',
+	'KeyO': 'C6',
+	'Shift+KeyO': 'C#6',
+	'KeyP': 'D6',
+	'Shift+KeyP': 'D#6',
 
-	'h': 'E6',
-	'j': 'F6',
-	'J': 'F#6',
-	'k': 'G6',
-	'K': 'G#6',
-	'l': 'A6',
-	'L': 'A#6',
-	';': 'B6',
+	'KeyH': 'E6',
+	'KeyJ': 'F6',
+	'Shift+KeyJ': 'F#6',
+	'KeyK': 'G6',
+	'Shift+KeyK': 'G#6',
+	'KeyL': 'A6',
+	'Shift+KeyL': 'A#6',
+	'Semicolon': 'B6',
 
-	'n': 'C7',
-	'N': 'C#7',
-	'm': 'D7',
-	'M': 'D#7',
-	',': 'E7',
-	'.': 'F7',
-	'>': 'F#7',
-	'/': 'G7',
-	'?': 'G#7',
+	'KeyN': 'C7',
+	'Shift+KeyN': 'C#7',
+	'KeyM': 'D7',
+	'Shift+KeyM': 'D#7',
+	'Comma': 'E7',
+	'Period': 'F7',
+	'Shift+Period': 'F#7',
+	'Slash': 'G7',
+	'Shift+Slash': 'G#7',
 } as { [k: string]: string };
 
 export class Key {
@@ -118,7 +118,7 @@ export class PianoCanvas extends AutoResizeCanvas {
 	whiteKeys: Key[] = [];
 	blackKeys: Key[] = [];
 
-	held = {} as { [key: string]: number };
+	held = {} as { [note: string]: number };
 	mouseHeld = '';
 
 	hotkeys = { ...leftRightMap };
@@ -199,7 +199,7 @@ export class PianoCanvas extends AutoResizeCanvas {
 	}
 
 	onUp(note: string) {
-		this.held[note] = 0;
+		delete this.held[note];
 		this.render();
 
 		const event = this.noteup;
@@ -252,10 +252,11 @@ export class PianoCanvas extends AutoResizeCanvas {
 		ev.preventDefault();
 		const dir = ev.deltaY;
 		this.setOffset(this.offsetX - dir);
+		this.onMouseMove(ev);
 		this.render();
 	}
 
-	onDownOrUp(note: string, isDown: boolean, velocity = 100) {
+	onDownOrUp(note: string, isDown: boolean, velocity = 50) {
 		if (isDown) this.onDown(note, velocity);
 		else this.onUp(note);
 	}
@@ -305,20 +306,26 @@ export class PianoCanvas extends AutoResizeCanvas {
 	}
 
 	onKey(ev: KeyboardEvent, isDown: boolean) {
-		const note = this.hotkeys[ev.key];
+		const hotkey = `${ev.shiftKey ? 'Shift+' : ''}${ev.code}`;
+		const note = this.hotkeys[hotkey];
 		if (note) {
 			ev.preventDefault();
 			this.onDownOrUp(note, isDown);
+		}
+		if (ev.key == 'Shift') {
+			// If holding shift, release non-shifted keys.
+			// If releasing shift, release shifted keys.
+			Object.keys(this.held).forEach(note => {
+				const heldHotkey = this.noteHotkeys[note];
+				if (!heldHotkey) return;
 
-			if (!isDown) {
-				const lowerCaseHotkey = ev.key.toLowerCase();
-				const lowerNote = this.hotkeys[lowerCaseHotkey];
-				if (lowerNote && lowerNote != note) this.onUp(lowerNote);
+				const otherHotkey = isDown ? `${ev.shiftKey ? 'Shift+' : ''}${heldHotkey}` : heldHotkey.replace('Shift+', '');
+				const otherNote = this.hotkeys[otherHotkey];
+				if (!otherNote) return;
 
-				const upperCaseHotkey = ev.key.toUpperCase();
-				const upperNote = this.hotkeys[upperCaseHotkey];
-				if (upperNote && upperNote != note) this.onUp(upperNote);
-			}
+				this.onDownOrUp(note, false);
+				this.onDownOrUp(otherNote, true);
+			});
 		}
 	}
 
@@ -339,7 +346,10 @@ export class PianoCanvas extends AutoResizeCanvas {
 		ctx.fillStyle = isWhite ? 'black' : 'white';
 		ctx.fillText(note, x + width / 2, y, width);
 
-		const hotkey = this.noteHotkeys[note];
+		const hotkey = this.noteHotkeys[note]
+			?.replace('Shift+', '⇧')
+			?.replace('Key', '')
+			?.replace('Digit', '');
 		if (hotkey) {
 			y += 20;
 			ctx.fillText(hotkey, x + width / 2, y, width);

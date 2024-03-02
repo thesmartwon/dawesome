@@ -2,7 +2,7 @@ import { AutoResizeCanvas } from './AutoResizeCanvas';
 import { globalAnalyzer } from '../audio/Player';
 
 export class AnalyzerCanvas extends AutoResizeCanvas {
-	dataArray: Uint8Array = new Uint8Array(0);
+	dataArray: Uint8Array;
 
 	constructor() {
 		super();

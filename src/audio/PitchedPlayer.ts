@@ -46,7 +46,7 @@ export function dynamicToGain(dynamic: Dynamic): number {
 	}
 }
 
-// Will detune notes to play new ones.
+// Will detune samples to play unavailable ones.
 export class PitchedPlayer extends Player {
 	layers: { [gainStart: number]: { [freqency: number]: undefined } } = {};
 	playing: { [freq: number]: ReturnType<Player["play"]>[] } = {};
@@ -73,8 +73,7 @@ export class PitchedPlayer extends Player {
 		const nearest = closest(freq, frequencies);
 		const name = sampleName(layer, nearest);
 
-		const dir = nearest < freq ? 1 : -1;
-		const detuneCents = 1200 * Math.log2(freq / nearest) * dir;
+		const detuneCents = 1200 * Math.log2(freq / nearest);
 
 		const res = super.play(name, { gain, detuneCents });
 		this.playing[freq] ??= [];
