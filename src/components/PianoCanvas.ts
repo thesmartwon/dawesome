@@ -311,21 +311,8 @@ export class PianoCanvas extends AutoResizeCanvas {
 		if (note) {
 			ev.preventDefault();
 			this.onDownOrUp(note, isDown);
-		}
-		if (ev.key == 'Shift') {
-			// If holding shift, release non-shifted keys.
-			// If releasing shift, release shifted keys.
-			Object.keys(this.held).forEach(note => {
-				const heldHotkey = this.noteHotkeys[note];
-				if (!heldHotkey) return;
-
-				const otherHotkey = isDown ? `${ev.shiftKey ? 'Shift+' : ''}${heldHotkey}` : heldHotkey.replace('Shift+', '');
-				const otherNote = this.hotkeys[otherHotkey];
-				if (!otherNote) return;
-
-				this.onDownOrUp(note, false);
-				this.onDownOrUp(otherNote, true);
-			});
+		} else if (ev.key == 'Shift') {
+			Object.keys(this.held).forEach(note => this.onDownOrUp(note, false));
 		}
 	}
 
