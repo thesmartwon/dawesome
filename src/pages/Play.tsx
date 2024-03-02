@@ -7,7 +7,11 @@ import styles from './Play.module.css';
 
 type AnyPlayer = PitchedPlayer | Player;
 
+const players = {} as { [id: string]: AnyPlayer };
+
 function createPlayer(index: SampleIndex, category: string, name: string): AnyPlayer {
+	if (players[name]) return players[name];
+
 	const samples = index[category][name];
 	switch (category) {
 		case 'strings': {
@@ -21,12 +25,13 @@ function createPlayer(index: SampleIndex, category: string, name: string): AnyPl
 					console.warn('could not parse frequency for sample', sample);
 					return;
 				}
-				const url = `${SAMPLE_BASE}/strings/Splendid Grand Piano/${encodeURIComponent(sample)}.ogg`;
+				const url = `${SAMPLE_BASE}/strings/${name}/${encodeURIComponent(sample)}.ogg`;
 				const dynamic = sample.substring(0, 2).toLowerCase() as Dynamic;
 				const gain = dynamicToGain(dynamic);
 				noteUrls.push({ freq, url, gain });
 			});
 			res.loadLayers(noteUrls);
+			players[name] = res;
 			return res;
 		}
 		case 'percussion': {
@@ -34,6 +39,7 @@ function createPlayer(index: SampleIndex, category: string, name: string): AnyPl
 			samples.forEach(s =>
 				res.loadUrl(s, `${SAMPLE_BASE}/${category}/${name}/${s}.ogg`)
 			);
+			players[name] = res;
 			return res;
 		}
 		default:

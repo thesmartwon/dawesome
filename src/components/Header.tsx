@@ -27,7 +27,7 @@ export function Header(props: HeaderProps) {
 			<A {...aprops} href="/sequence">Sequence</A>
 			<A {...aprops} href="/arrange">Arrange</A>
 			<div class={styles.spacer} />
-			<canvas is="daw-analyzer" height="100%" width="300px" />
+			<canvas is="daw-analyzer" width="300" height="74" />
 			<Switch>
 				<Match when={volume() > 75}>
 					<IoVolumeHighOutline size="1.5em" />

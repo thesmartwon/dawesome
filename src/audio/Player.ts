@@ -24,6 +24,7 @@ export function connectSerial(nodes: (AudioNode | AudioInsert | undefined)[]) {
 export const globalCtx = new AudioContext();
 export const globalGain = globalCtx.createGain();
 export const globalAnalyzer = globalCtx.createAnalyser();
+export let nPlaying = 0;
 
 function createDecayEnvelope(
 	context: BaseAudioContext,
@@ -110,7 +111,9 @@ export class Player {
 			this.ctx.destination,
 		]);
 
+		nPlaying++;
 		source.start();
+		source.onended = () => nPlaying--;
 
 		return stop;
 	}
