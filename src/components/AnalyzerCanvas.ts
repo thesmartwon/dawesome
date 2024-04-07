@@ -12,6 +12,11 @@ export class AnalyzerCanvas extends AutoResizeCanvas {
 		requestAnimationFrame(() => this.render());
 	}
 
+	onResize() {
+		super.onResize();
+		this.rendered = false;
+	}
+
 	render() {
 		if (nPlaying != 0 || !this.rendered) {
 			const ctx = this.ctx();

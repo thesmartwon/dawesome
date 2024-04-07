@@ -11,10 +11,20 @@ export interface HeaderProps {
 };
 export function Header(props: HeaderProps) {
 	const [volume, setVolume] = createSignal(globalGain.gain.value * 100);
+	const [lastVolume, setLastVolume] = createSignal(volume());
 
 	createEffect(() => {
 		globalGain.gain.value = volume() / 100;
 	});
+
+	function toggleMute() {
+		if (volume() > 0) {
+			setLastVolume(volume());
+			setVolume(0);
+		} else {
+			setVolume(lastVolume());
+		}
+	}
 
 	const aprops = {
 		class: styles.link,
@@ -28,20 +38,22 @@ export function Header(props: HeaderProps) {
 			<A {...aprops} href="/arrange">Arrange</A>
 			<div class={styles.spacer} />
 			<canvas is="daw-analyzer" width="300" height="74" />
-			<Switch>
-				<Match when={volume() > 75}>
-					<IoVolumeHighOutline size="1.5em" />
-				</Match>
-				<Match when={volume() > 25}>
-					<IoVolumeMediumOutline size="1.5em" />
-				</Match>
-				<Match when={volume() > 0}>
-					<IoVolumeLowOutline size="1.5em" />
-				</Match>
-				<Match when={volume() == 0}>
-					<IoVolumeOffOutline size="1.5em" />
-				</Match>
-			</Switch>
+			<button onClick={toggleMute}>
+				<Switch>
+					<Match when={volume() > 75}>
+						<IoVolumeHighOutline size="1.5em" />
+					</Match>
+					<Match when={volume() > 25}>
+						<IoVolumeMediumOutline size="1.5em" />
+					</Match>
+					<Match when={volume() > 0}>
+						<IoVolumeLowOutline size="1.5em" />
+					</Match>
+					<Match when={volume() == 0}>
+						<IoVolumeOffOutline size="1.5em" />
+					</Match>
+				</Switch>
+			</button>
 			<input
 				type="range"
 				min="0"
