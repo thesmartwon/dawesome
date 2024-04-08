@@ -1,7 +1,7 @@
 import { AutoResizeCanvas } from './AutoResizeCanvas';
-import { PianoCanvas, Key, NoteDownEvent, NoteUpEvent } from './PianoCanvas';
+import { Piano, Key, NoteDownEvent, NoteUpEvent } from './Piano';
 
-class DisplayKey extends Key {
+export class DisplayKey extends Key {
 	constructor(
 		public x: number,
 		public y: number,
@@ -18,17 +18,18 @@ class DisplayKey extends Key {
 	}
 }
 
-export class PianoPlayedCanvas extends AutoResizeCanvas {
+export class PianoPlayed extends AutoResizeCanvas {
+	static observedAttributes = ['speed', ...super.observedAttributes];
 	// Percent per second
 	speed = 0.2;
-	prevTime: DOMHighResTimeStamp = performance.now();
 
 	keys: DisplayKey[] = [];
 
-	_piano?: PianoCanvas;
+	_piano?: Piano;
+	_hello?: string;
 	cleanup = () => {};
 
-	set piano(p: PianoCanvas) {
+	set piano(p: Piano | undefined) {
 		this._piano = p;
 		this.keys = [];
 		const noteDown = (ev: NoteDownEvent) => {
@@ -48,9 +49,12 @@ export class PianoPlayedCanvas extends AutoResizeCanvas {
 		};
 	}
 
-	connectedCallback() {
-		this.prevTime = performance.now();
-		this.render();
+	disconnectedCallback() {
+		this.cleanup();
+	}
+
+	attributeChangedCallback(prop: string, _old: string | number, value: string | number) {
+		if (prop == 'speed') this.speed = +value;
 	}
 
 	onNoteDown(note: string, velocity: number) {
@@ -65,6 +69,8 @@ export class PianoPlayedCanvas extends AutoResizeCanvas {
 				break;
 			}
 		}
+		this.prevTime = performance.now();
+		this.raf();
 	}
 
 	onNoteUp(note: string) {
@@ -75,6 +81,8 @@ export class PianoPlayedCanvas extends AutoResizeCanvas {
 				break;
 			}
 		}
+		this.prevTime = performance.now();
+		this.raf();
 	}
 
 	private renderKey(key: Key) {
@@ -84,7 +92,7 @@ export class PianoPlayedCanvas extends AutoResizeCanvas {
 		const isWhite = key.note[1] != '#';
 
 		let { x, y, width, height, isDown } = key;
-		x += this._piano.offset;
+		x += this._piano.offsetX;
 		if (x + width < 0 || x > ctx.canvas.width) return;
 
 		ctx.fillStyle = isWhite ? 'white' : 'black';
@@ -96,7 +104,7 @@ export class PianoPlayedCanvas extends AutoResizeCanvas {
 		ctx.strokeRect(x, y, width, height);
 	}
 
-	private renderKeys(time: DOMHighResTimeStamp) {
+	render(time: DOMHighResTimeStamp) {
 		const dt = (time - this.prevTime) / 1000;
 		const ctx = this.ctx();
 		if (ctx.canvas.width == 0 || ctx.canvas.height == 0) return;
@@ -112,13 +120,8 @@ export class PianoPlayedCanvas extends AutoResizeCanvas {
 		for (let i = 0; i < this.keys.length; i++) this.renderKey(this.keys[i]);
 
 		this.prevTime = time;
-
-		this.render();
-	}
-
-	render() {
-		requestAnimationFrame(this.renderKeys.bind(this));
+		if (this.keys.length > 0) this.raf();
 	}
 }
 
-customElements.define('daw-piano-played', PianoPlayedCanvas, { extends: 'canvas' });
+customElements.define('daw-piano-played', PianoPlayed);

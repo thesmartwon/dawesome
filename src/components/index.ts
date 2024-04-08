@@ -1,7 +1,4 @@
 export * from './Header';
-export * from './PianoCanvas';
-export * from './PianoPlayedCanvas';
-export * from './AnalyzerCanvas';
 export * from './menu';
 export * from './SelectMidi';
 export * from './InstrumentSelect';

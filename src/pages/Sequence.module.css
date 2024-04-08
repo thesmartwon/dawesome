@@ -1,6 +1,9 @@
-.notes {
+.main {
+	display: flex;
 	--width: 200px;
-	/* should set in js for dynamic header */
+}
+
+.notes {
 	--height: calc(100vh - var(--header-height));
 	width: var(--width);
 }
@@ -12,10 +15,8 @@
 	transform: rotate(-90deg) translateX(calc(-1 * var(--height)));
 }
 
-.main {
-	display: flex;
-}
-
 .sequencer {
-	flex-grow: 1;
+	flex: 1;
+	width: calc(100vw - var(--width));
+	height: calc(100vh - var(--header-height));
 }

@@ -1,6 +1,8 @@
 import { createSignal } from 'solid-js';
 import { PitchedPlayer } from '../audio/PitchedPlayer';
-import { PianoCanvas, NoteUpEvent, NoteDownEvent } from './index';
+import { Piano as PianoCanvas, NoteUpEvent, NoteDownEvent } from '../webcomponents/Piano';
+import '../webcomponents/Piano'; // daw-piano
+import '../webcomponents/PianoPlayed'; // daw-piano
 import styles from './Piano.module.css';
 
 export interface PianoProps {
@@ -12,15 +14,12 @@ export function Piano(props: PianoProps) {
 
 	return (
 		<>
-			<canvas
-				is="daw-piano-played"
+			<daw-piano-played
 				class={styles.played}
+				prop:hello={"asdf"}
 				prop:piano={pianoRef()}
-			>
-				Canvas unsupported
-			</canvas>
-			<canvas
-				is="daw-piano"
+			/>
+			<daw-piano
 				ref={setPianoRef}
 				class={styles.piano}
 				onNoteDown={(ev: NoteDownEvent) => {
@@ -32,9 +31,7 @@ export function Piano(props: PianoProps) {
 					props.player.stopNote(note);
 				}}
 				prop:midi={props.midi}
-			>
-				Canvas unsupported
-			</canvas>
+			/>
 		</>
 	);
 }

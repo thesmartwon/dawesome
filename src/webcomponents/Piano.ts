@@ -107,7 +107,7 @@ export class Key {
 export type NoteDownEvent = CustomEvent<{ note: string, velocity: number}>;
 export type NoteUpEvent = CustomEvent<{ note: string }>;
 
-export class PianoCanvas extends AutoResizeCanvas {
+export class Piano extends AutoResizeCanvas {
 	static observedAttributes = ['midi', ...super.observedAttributes];
 
 	offsetX = 0;
@@ -142,17 +142,12 @@ export class PianoCanvas extends AutoResizeCanvas {
 		},
 	});
 
-	boundKeyDown;
-	boundKeyUp;
+	boundKeyDown = this.onKeyDown.bind(this);
+	boundKeyUp = this.onKeyUp.bind(this);
 	cleanupMidi = () => {};
 
-	constructor() {
-		super();
-		this.boundKeyDown = this.onKeyDown.bind(this);
-		this.boundKeyUp = this.onKeyUp.bind(this);
-	}
-
 	connectedCallback() {
+		super.connectedCallback();
 		this.addEventListener('wheel', ev => this.onWheel(ev));
 		this.addEventListener('mousedown', ev => this.onMouse(ev, true));
 		this.addEventListener('mouseup', ev => this.onMouse(ev, false));
@@ -160,8 +155,6 @@ export class PianoCanvas extends AutoResizeCanvas {
 
 		document.addEventListener('keydown', this.boundKeyDown);
 		document.addEventListener('keyup', this.boundKeyUp);
-
-		this.render();
 	}
 
 	disconnectedCallback() {
@@ -170,7 +163,7 @@ export class PianoCanvas extends AutoResizeCanvas {
 	}
 
 	setOffset(n: number) {
-		this.offsetX = clamp(n, this.width - this.virtualWidth, 0);
+		this.offsetX = clamp(n, this.canvas!.width - this.virtualWidth, 0);
 		this.render();
 	}
 
@@ -212,12 +205,12 @@ export class PianoCanvas extends AutoResizeCanvas {
 		this.whiteKeys.length = 0;
 		this.blackKeys.length = 0;
 
-		const whiteHeightPx = this.height;
+		const whiteHeightPx = this.canvas.height;
 		const whiteWidthPx = whiteHeightPx * whiteWidth / whiteHeight;
 		const blackHeightPx = whiteHeightPx * blackHeight / whiteHeight;
 		const blackWidthPx = whiteHeightPx * blackWidth / whiteHeight;
 
-		let y = this.height - whiteHeightPx;
+		let y = this.canvas.height - whiteHeightPx;
 		for (let i = 0; i < 128; i++) {
 			const note = Note.fromMidiSharps(i);
 
@@ -237,15 +230,12 @@ export class PianoCanvas extends AutoResizeCanvas {
 
 	onResize() {
 		super.onResize();
-
 		this.layout();
 
 		if (!this.loaded) {
-			this.setOffset(this.width / 2 - this.virtualMiddle);
+			this.setOffset(this.canvas.width / 2 - this.virtualMiddle);
 			this.loaded = true;
 		}
-
-		this.render();
 	}
 
 	onWheel(ev: WheelEvent) {
@@ -314,6 +304,7 @@ export class PianoCanvas extends AutoResizeCanvas {
 		} else if (ev.key == 'Shift') {
 			Object.keys(this.held).forEach(note => this.onDownOrUp(note, false));
 		}
+		this.render();
 	}
 
 	renderKey(key: Key) {
@@ -343,7 +334,7 @@ export class PianoCanvas extends AutoResizeCanvas {
 		}
 	}
 
-	renderKeys() {
+	render() {
 		const ctx = this.ctx();
 		if (ctx.canvas.width == 0 || ctx.canvas.height == 0) return;
 
@@ -354,10 +345,6 @@ export class PianoCanvas extends AutoResizeCanvas {
 		for (let i = 0; i < this.whiteKeys.length; i++) this.renderKey(this.whiteKeys[i]);
 		for (let i = 0; i < this.blackKeys.length; i++) this.renderKey(this.blackKeys[i]);
 	}
-
-	render() {
-		requestAnimationFrame(() => this.renderKeys());
-	}
 }
 
-customElements.define('daw-piano', PianoCanvas, { extends: 'canvas' });
+customElements.define('daw-piano', Piano);

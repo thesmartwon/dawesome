@@ -1,3 +1,5 @@
+import { createSignal } from 'solid-js';
+
 export type AudioInsert = {
   input: AudioNode;
   output: AudioNode;
@@ -26,7 +28,7 @@ export const globalGain = globalCtx.createGain();
 globalGain.gain.value = 50;
 export const globalAnalyzer = globalCtx.createAnalyser();
 globalAnalyzer.fftSize = 2048;
-export let nPlaying = 0;
+export const [nPlaying, setNPlaying] = createSignal(0);
 
 function createDecayEnvelope(
 	context: BaseAudioContext,
@@ -113,9 +115,11 @@ export class Player {
 			this.ctx.destination,
 		]);
 
-		nPlaying++;
+		setNPlaying(n => n + 1);
 		source.start();
-		source.onended = () => nPlaying--;
+		source.onended = () => {
+			setNPlaying(n => n - 1);
+		};
 
 		return stop;
 	}

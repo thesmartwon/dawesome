@@ -1,0 +1,46 @@
+import { debounce } from '../Helpers';
+
+export class AutoResizeCanvas extends HTMLElement {
+	static observedAttributes = ['rotate', 'width', 'height'];
+
+	rotate = false;
+	canvas = document.createElement('canvas');
+	prevTime: DOMHighResTimeStamp = performance.now();
+
+	connectedCallback() {
+		this.appendChild(this.canvas);
+
+		new ResizeObserver(debounce(() => this.onResize())).observe(this);
+		this.prevTime = performance.now();
+		this.raf();
+	}
+
+	onResize() {
+		const { width, height } = this.getBoundingClientRect();
+		this.canvas.width = this.rotate ? height : width;
+		this.canvas.height = this.rotate ? width : height;
+		this.raf();
+	}
+
+	ctx() {
+		const res = this.canvas.getContext('2d');
+		if (!res) throw new Error('2d context not supported');
+		return res;
+	}
+
+	attributeChangedCallback(name: string, _old: string, value: string) {
+		if (name === 'rotate') this.rotate = value == 'true';
+		else if (name == 'height') this.canvas.height = +value;
+		else if (name == 'width') this.canvas.width = +value;
+		else if (name in this) (this as any)[name] = value;
+		this.raf();
+	}
+
+	render(time: DOMHighResTimeStamp) {
+		this.prevTime = time;
+	}
+
+	raf() {
+		requestAnimationFrame(this.render.bind(this));
+	}
+}
