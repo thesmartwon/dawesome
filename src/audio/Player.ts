@@ -23,7 +23,9 @@ export function connectSerial(nodes: (AudioNode | AudioInsert | undefined)[]) {
 
 export const globalCtx = new AudioContext();
 export const globalGain = globalCtx.createGain();
+globalGain.gain.value = 50;
 export const globalAnalyzer = globalCtx.createAnalyser();
+globalAnalyzer.fftSize = 2048;
 export let nPlaying = 0;
 
 function createDecayEnvelope(

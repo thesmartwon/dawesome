@@ -71,11 +71,8 @@ export interface PlayProps {
 export function Play(props: PlayProps) {
 	const [midi, setMidi] = createSignal<MIDIInput | undefined>();
 	const [drawerOpen, setDrawerOpen] = createSignal<boolean>(false);
-	const [headerHeight, setHeaderHeight] = createSignal(0);
 	const [category, setCategory] = createSignal('strings');
 	const [name, setName] = createSignal('Splendid Grand Piano');
-
-	let headerRef: HTMLElement | undefined;
 
 	function onKeyDown(ev: KeyboardEvent) {
 		if (ev.key == 'Escape' && drawerOpen()) {
@@ -83,14 +80,6 @@ export function Play(props: PlayProps) {
 			setDrawerOpen(false);
 		}
 	}
-
-	onMount(() => {
-		if (!headerRef) return;
-
-		const height = headerRef.getBoundingClientRect().height;
-		const margin = getComputedStyle(headerRef).margin;
-		setHeaderHeight(height + parseFloat(margin) * 2);
-	});
 
 	onMount(() => {
 		document.addEventListener('keydown', onKeyDown);
@@ -114,9 +103,9 @@ export function Play(props: PlayProps) {
 	// onOpen={listMidi}
 	return (
 		<>
-			<Header ref={headerRef} onToggle={() => setDrawerOpen(!drawerOpen())} />
+			<Header onToggle={() => setDrawerOpen(!drawerOpen())} />
 			<Show when={drawerOpen()}>
-				<aside class={styles.drawer} style={{ 'margin-top': `${headerHeight()}px` }}>
+				<aside class={styles.drawer}>
 					<InstrumentSelect
 						index={props.index}
 						onSelect={(category, name) => {

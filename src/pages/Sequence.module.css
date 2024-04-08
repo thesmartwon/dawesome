@@ -1,0 +1,21 @@
+.notes {
+	--width: 200px;
+	/* should set in js for dynamic header */
+	--height: calc(100vh - var(--header-height));
+	width: var(--width);
+}
+
+.notes > canvas {
+	width: var(--height);
+	height: var(--width);
+	transform-origin: top left;
+	transform: rotate(-90deg) translateX(calc(-1 * var(--height)));
+}
+
+.main {
+	display: flex;
+}
+
+.sequencer {
+	flex-grow: 1;
+}

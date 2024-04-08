@@ -4,9 +4,10 @@ import { globalAnalyzer, nPlaying } from '../audio/Player';
 export class AnalyzerCanvas extends AutoResizeCanvas {
 	dataArray: Uint8Array;
 	rendered = false;
+	container = this.parentElement as HTMLElement;
 
 	constructor() {
-		super();
+		super('parent');
 
 		this.dataArray = new Uint8Array(globalAnalyzer.frequencyBinCount);
 		requestAnimationFrame(() => this.render());
@@ -18,39 +19,37 @@ export class AnalyzerCanvas extends AutoResizeCanvas {
 	}
 
 	render() {
+		const ctx = this.ctx();
+
+		ctx.fillStyle = "rgb(200, 200, 200)";
+		ctx.fillRect(0, 0, this.width, this.height);
+
+		ctx.lineWidth = 2;
+		ctx.strokeStyle = "rgb(0, 0, 0)";
+		ctx.beginPath();
+
+		ctx.moveTo(0, this.height / 2);
+
 		if (nPlaying != 0 || !this.rendered) {
-			const ctx = this.ctx();
-
-			ctx.fillStyle = "rgb(200, 200, 200)";
-			ctx.fillRect(0, 0, this.width, this.height);
-
-			ctx.lineWidth = 2;
-			ctx.strokeStyle = "rgb(0, 0, 0)";
-			ctx.beginPath();
-
 			const bufferLength = this.dataArray.length;
 			const sliceWidth = (this.width * 1.0) / bufferLength;
 			let x = 0;
 
 			globalAnalyzer.getByteTimeDomainData(this.dataArray);
 			for (let i = 0; i < bufferLength; i++) {
-				const v = this.dataArray[i] / 128.0;
-				const y = (v * this.height) / 2;
+				const v = this.dataArray[i] - 128;
+				const y = this.height / 2 + (v / 128 * this.height * .5);
 
-				if (i === 0) {
-					ctx.moveTo(x, y);
-				} else {
-					ctx.lineTo(x, y);
-				}
+				ctx.lineTo(x, y);
 
 				x += sliceWidth;
 			}
 
-			ctx.lineTo(this.width, this.height / 2);
-			ctx.stroke();
-
 			this.rendered = true;
 		}
+
+		ctx.lineTo(this.width, this.height / 2);
+		ctx.stroke();
 
 		requestAnimationFrame(() => this.render());
 	}

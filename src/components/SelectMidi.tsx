@@ -21,6 +21,7 @@ export function SelectMidi(props: SelectMidiProps) {
 		setInputs(res);
 	}
 	onMount(() => {
+		if (!('requestMIDIAccess' in navigator)) return;
 		navigator.requestMIDIAccess().then(m => {
 			m.addEventListener('statechange', updateInputs);
 			setMidi(m); // to later removeEventListener

@@ -7,7 +7,7 @@ import { IoVolumeHighOutline, IoVolumeMediumOutline, IoVolumeLowOutline, IoVolum
 
 export interface HeaderProps {
 	onToggle?(): void;
-	ref: HTMLElement | undefined;
+	ref?: HTMLElement;
 };
 export function Header(props: HeaderProps) {
 	const [volume, setVolume] = createSignal(globalGain.gain.value * 100);
@@ -36,8 +36,9 @@ export function Header(props: HeaderProps) {
 			<A {...aprops} href="/play">Play</A>
 			<A {...aprops} href="/sequence">Sequence</A>
 			<A {...aprops} href="/arrange">Arrange</A>
-			<div class={styles.spacer} />
-			<canvas is="daw-analyzer" width="300" height="74" />
+			<div class={styles.analyzer}>
+				<canvas is="daw-analyzer" height="74" />
+			</div>
 			<button onClick={toggleMute}>
 				<Switch>
 					<Match when={volume() > 75}>

@@ -108,7 +108,7 @@ export type NoteDownEvent = CustomEvent<{ note: string, velocity: number}>;
 export type NoteUpEvent = CustomEvent<{ note: string }>;
 
 export class PianoCanvas extends AutoResizeCanvas {
-	static observedAttributes = ['midi'];
+	static observedAttributes = ['midi', ...super.observedAttributes];
 
 	offsetX = 0;
 	virtualWidth = 0;
@@ -250,7 +250,7 @@ export class PianoCanvas extends AutoResizeCanvas {
 
 	onWheel(ev: WheelEvent) {
 		ev.preventDefault();
-		const dir = ev.deltaY;
+		const dir = this.rotate ? -ev.deltaY : ev.deltaY;
 		this.setOffset(this.offsetX - dir);
 		this.onMouseMove(ev);
 		this.render();

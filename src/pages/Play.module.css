@@ -12,4 +12,5 @@
 	margin-top: 1em;
 	z-index: 10;
 	background: rgb(var(--color--background-100));
+	margin-top: var(--header-height);
 }

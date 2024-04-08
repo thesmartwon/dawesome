@@ -5,6 +5,7 @@
 	--color--secondary-100: 54, 54, 54;
 	--color--border-100: 36, 36, 36;
 	--color--link: 50, 115, 220;
+	--header-height: 74px;
 }
 @media (prefers-color-scheme: dark) {
 	:root {

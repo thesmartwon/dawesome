@@ -84,7 +84,7 @@ export class PianoPlayedCanvas extends AutoResizeCanvas {
 		const isWhite = key.note[1] != '#';
 
 		let { x, y, width, height, isDown } = key;
-		x += this._piano.offsetX;
+		x += this._piano.offset;
 		if (x + width < 0 || x > ctx.canvas.width) return;
 
 		ctx.fillStyle = isWhite ? 'white' : 'black';

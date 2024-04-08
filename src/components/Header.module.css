@@ -1,7 +1,9 @@
 .nav {
-	margin: 1em;
+	padding: 0 1em;
 	display: flex;
 	align-items: center;
+	height: var(--header-height);
+	width: 100vw;
 }
 .nav > svg {
 	margin: 0 .8em;
@@ -11,12 +13,16 @@
 	color: black;
 	color: rgb(var(--color--link));
 	margin: 0 .8em;
+	text-decoration-line: none;
 }
-.spacer {
-	flex-grow: 1;
-}
-
 .active {
 	font-weight: 200;
 	text-decoration-line: underline;
+}
+.analyzer {
+	flex: 1;
+	height: var(--header-height);
+}
+.analyzer > canvas {
+	max-width: 100%;
 }
