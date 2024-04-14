@@ -9,7 +9,7 @@
 }
 @media (prefers-color-scheme: dark) {
 	:root {
-		--color--background-100: 18, 18, 18;
+		--color--background-100: 38, 38, 38;
 		--color--primary-100: 181, 181, 181;
 		--color--active-100: 36, 36, 100;
 		--color--secondary-100: 201, 201, 201;

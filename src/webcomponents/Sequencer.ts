@@ -1,28 +1,49 @@
 import { AutoResizeCanvas } from './AutoResizeCanvas';
-import { Piano, Key } from './Piano';
-import { DisplayKey } from './PianoPlayed';
+import { Piano } from './Piano';
+
+export class Note {
+	constructor(
+		public note: string,
+		public start: number,
+		public end: number,
+		public velocity: number,
+	) {}
+};
 
 export class SequencerCanvas extends AutoResizeCanvas {
 	_piano?: Piano;
-	keys: DisplayKey[] = [];
+	notes: Note[] = [
+		{ note: 'C4', start: 0, end: 2, velocity: 100 },
+		{ note: 'D4', start: 1, end: 2, velocity: 100 },
+		{ note: 'C#4', start: 1, end: 2, velocity: 100 },
+	];
+	virtualWidth = 0;
+	offsetX = 0;
+	px_per_s = 100;
 
 	set piano(p: Piano | undefined) {
 		this._piano = p;
-		this.keys = [];
+		// this.notes = [];
 	}
 
-	connectedCallback() {
-		this.render();
-	}
-
-	private renderKey(key: Key) {
+	private renderNote(_note: Note) {
 		const ctx = this.ctx();
-		const isWhite = key.note[1] != '#';
+		const { note, start, end, velocity } = _note;
+		const isWhite = note[1] != '#';
 
-		let { y, width, height } = key;
-		const x = 0;
-		y += this._piano!.offsetX;
-		// if (x + width < 0 || x > ctx.canvas.width) return;
+		const key = isWhite
+			? this._piano!.whiteKeys.find(k => k.note == note)
+			: this._piano!.blackKeys.find(k => k.note == note);
+
+		if (!key) return;
+
+		const width = (end - start) * this.px_per_s;
+		const height = key.width;
+		const x = start * this.px_per_s + this.offsetX;
+		const y = ctx.canvas.height - key.x - this._piano!.offsetX - height;
+
+		if (x < -width || x > ctx.canvas.width) return;
+		if (y < -height || y > ctx.canvas.height) return;
 
 		ctx.fillStyle = isWhite ? 'white' : 'black';
 		ctx.fillRect(x, y, width, height);
@@ -35,14 +56,10 @@ export class SequencerCanvas extends AutoResizeCanvas {
 
 		ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
-		for (let i = 0; i < (this._piano?.blackKeys.length ?? 0); i++)
-			this.renderKey(this._piano!.blackKeys[i]);
+		for (let i = 0; i < this.notes.length; i++) this.renderNote(this.notes[i]);
 
-		for (let i = 0; i < (this._piano?.whiteKeys.length ?? 0); i++)
-			this.renderKey(this._piano!.whiteKeys[i]);
-
-		this.render();
+		this.raf();
 	}
 }
 
-customElements.define('daw-sequencer', SequencerCanvas, { extends: 'canvas' });
+customElements.define('daw-sequencer', SequencerCanvas);
