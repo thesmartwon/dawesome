@@ -5,14 +5,12 @@
 	height: var(--header-height);
 	width: 100vw;
 }
-.nav > svg {
+.nav > * {
 	margin: 0 .8em;
 }
 .link {
 	font-size: 32px;
-	color: black;
 	color: rgb(var(--color--link));
-	margin: 0 .8em;
 	text-decoration-line: none;
 }
 .active {
@@ -23,6 +21,6 @@
 	flex: 1;
 	height: var(--header-height);
 }
-.analyzer > canvas {
-	max-width: 100%;
+.volume > button {
+	margin-right: .5em;
 }

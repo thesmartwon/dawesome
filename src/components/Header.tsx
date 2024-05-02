@@ -40,33 +40,35 @@ export function Header(props: HeaderProps) {
 			<A {...aprops} href="/arrange">Arrange</A>
 			<daw-analyzer
 				class={styles.analyzer}
+				prop:mode="spectrometer"
 				prop:node={globalAnalyzer}
 				prop:nPlaying={nPlaying()}
-				height="74"
 			/>
-			<button onClick={toggleMute}>
-				<Switch>
-					<Match when={volume() > 75}>
-						<IoVolumeHighOutline size="1.5em" />
-					</Match>
-					<Match when={volume() > 25}>
-						<IoVolumeMediumOutline size="1.5em" />
-					</Match>
-					<Match when={volume() > 0}>
-						<IoVolumeLowOutline size="1.5em" />
-					</Match>
-					<Match when={volume() == 0}>
-						<IoVolumeOffOutline size="1.5em" />
-					</Match>
-				</Switch>
-			</button>
-			<input
-				type="range"
-				min="0"
-				max="100"
-				value={volume()}
-				onInput={ev => setVolume(+ev.target.value)}
-			/>
+			<div class={styles.volume}>
+				<button onClick={toggleMute}>
+					<Switch>
+						<Match when={volume() > 75}>
+							<IoVolumeHighOutline size="1.5em" />
+						</Match>
+						<Match when={volume() > 25}>
+							<IoVolumeMediumOutline size="1.5em" />
+						</Match>
+						<Match when={volume() > 0}>
+							<IoVolumeLowOutline size="1.5em" />
+						</Match>
+						<Match when={volume() == 0}>
+							<IoVolumeOffOutline size="1.5em" />
+						</Match>
+					</Switch>
+				</button>
+				<input
+					type="range"
+					min="0"
+					max="100"
+					value={volume()}
+					onInput={ev => setVolume(+ev.target.value)}
+				/>
+			</div>
 		</nav>
 	);
 }

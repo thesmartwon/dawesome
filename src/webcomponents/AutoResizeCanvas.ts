@@ -10,13 +10,13 @@ export class AutoResizeCanvas extends HTMLElement {
 	connectedCallback() {
 		this.appendChild(this.canvas);
 
-		new ResizeObserver(debounce(() => this.onResize())).observe(this);
+		new ResizeObserver(debounce(this.onResize.bind(this))).observe(this);
 		this.prevTime = performance.now();
 		this.raf();
 	}
 
-	onResize() {
-		const { width, height } = this.getBoundingClientRect();
+	onResize(entries: ResizeObserverEntry[]) {
+		const { width, height } = entries[0].contentRect;
 		this.canvas.width = this.rotate ? height : width;
 		this.canvas.height = this.rotate ? width : height;
 		this.raf();

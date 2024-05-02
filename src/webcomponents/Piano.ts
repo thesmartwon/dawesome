@@ -228,8 +228,8 @@ export class Piano extends AutoResizeCanvas {
 		}
 	}
 
-	onResize() {
-		super.onResize();
+	onResize(entries: ResizeObserverEntry[]) {
+		super.onResize(entries);
 		this.layout();
 
 		if (!this.loaded) {

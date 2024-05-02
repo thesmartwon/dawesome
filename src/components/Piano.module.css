@@ -1,11 +1,20 @@
 .played {
-	flex-grow: 1;
-	height: 100px;
+	flex: 2 2 auto;
 	width: 100%;
+	display: grid;
+}
+
+.played > * {
+	min-height: 0;
+	display: block;
+	grid-area: 1/1;
+}
+
+.played > daw-piano-played {
+	z-index: 2;
 }
 
 .piano {
-	height: 400px;
+	height: 33vh;
 	width: 100%;
 }
-

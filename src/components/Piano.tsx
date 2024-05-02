@@ -1,6 +1,7 @@
 import { createSignal } from 'solid-js';
 import { PitchedPlayer } from '../audio/PitchedPlayer';
 import { Piano as PianoCanvas, NoteUpEvent, NoteDownEvent } from '../webcomponents/Piano';
+import { globalAnalyzer, nPlaying } from '../audio/Player';
 import '../webcomponents/Piano'; // daw-piano
 import '../webcomponents/PianoPlayed'; // daw-piano
 import styles from './Piano.module.css';
@@ -14,11 +15,14 @@ export function Piano(props: PianoProps) {
 
 	return (
 		<>
-			<daw-piano-played
-				class={styles.played}
-				prop:hello={"asdf"}
-				prop:piano={pianoRef()}
-			/>
+			<div class={styles.played}>
+				<daw-analyzer
+					prop:mode="spectrogram"
+					prop:node={globalAnalyzer}
+					prop:nPlaying={nPlaying()}
+				/>
+				<daw-piano-played prop:piano={pianoRef()} />
+			</div>
 			<daw-piano
 				ref={setPianoRef}
 				class={styles.piano}
