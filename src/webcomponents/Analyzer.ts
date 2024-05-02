@@ -29,7 +29,9 @@ export class AnalyzerCanvas extends AutoResizeCanvas {
 		const ctx = this.ctx();
 		const { width, height } = ctx.canvas;
 
-		ctx.fillStyle = "rgb(200, 200, 200)";
+		const style = getComputedStyle(document.body)
+		const background = style.getPropertyValue('--color--background-100') || '200, 200, 200';
+		ctx.fillStyle = `rgb(${background})`;
 		ctx.lineWidth = 2;
 		ctx.strokeStyle = "rgb(0, 0, 0)";
 
@@ -76,7 +78,7 @@ export class AnalyzerCanvas extends AutoResizeCanvas {
 					value = this.dataArray[logIndex];
 				}
 
-				ctx.fillStyle = this.getColor(value);
+				ctx.fillStyle = this.getColor(value, background);
 				y = height - (value / 256) * height;
 
 				if (i == 0) {
@@ -111,7 +113,7 @@ export class AnalyzerCanvas extends AutoResizeCanvas {
 				const percent = i / bufferLength;
 				y = Math.round(percent * height);
 
-				ctx.fillStyle = this.getColor(value);
+				ctx.fillStyle = this.getColor(value, background);
 				ctx.fillRect(x - shift, height - y, shift, shift);
 			}
 
@@ -124,19 +126,20 @@ export class AnalyzerCanvas extends AutoResizeCanvas {
 		}
 	}
 
-	getColor(value: number) {
+	getColor(value: number, background: string) {
+		const b = background.split(',').map(Number);
 		const palette = {
-			0: [38,38,38],
-			10: [75, 38, 159],
-			20: [104,38,251],
-			30: [131,38,255],
-			40: [155,18,157],
-			50: [175, 37, 38],
-			60: [191, 59, 38],
-			70: [206, 88, 38],
-			80: [223, 132, 38],
-			90: [240, 188, 38],
-			100: [255, 252, 38]
+			0: b,
+			10:  [ 75, b[1], 159],
+			20:  [104, b[1], 251],
+			30:  [131, b[1], 255],
+			40:  [155,  18,  157],
+			50:  [175,  37,  b[2]],
+			60:  [191,  59,  b[2]],
+			70:  [206,  88,  b[2]],
+			80:  [223, 132,  b[2]],
+			90:  [240, 188,  b[2]],
+			100: [255, 252,  b[2]]
 		};
 
 		//floor to nearest 10:

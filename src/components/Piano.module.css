@@ -1,7 +1,7 @@
 .played {
-	flex: 2 2 auto;
 	width: 100%;
 	display: grid;
+	height: 66%;
 }
 
 .played > * {
@@ -14,8 +14,12 @@
 	z-index: 2;
 }
 
-.piano, .piano > daw-piano {
-	height: 33vh;
+.piano {
+	height: 34%;
+}
+
+.piano > daw-piano {
+	height: 100%;
 	width: 100%;
 	display: block;
 }
