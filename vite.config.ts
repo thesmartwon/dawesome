@@ -20,6 +20,6 @@ export default defineConfig({
 		target: 'esnext',
 	},
 	define: {
-		SAMPLE_BASE: JSON.stringify('http://localhost:8888'),
+		SAMPLE_BASE: JSON.stringify('https://samples.dawesome.io'),
 	},
 });
