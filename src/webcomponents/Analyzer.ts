@@ -8,7 +8,7 @@ export class AnalyzerCanvas extends AutoResizeCanvas {
 	_nPlaying = 0;
 	_timeout = 0;
 	mode: 'oscilliscope' | 'spectrometer' | 'spectrogram' | undefined;
-	speed = 1;
+	speed = 0.5;
 
 	set node(n: AnalyserNode) {
 		this._node = n;
@@ -28,6 +28,7 @@ export class AnalyzerCanvas extends AutoResizeCanvas {
 	render(time: DOMHighResTimeStamp) {
 		const ctx = this.ctx();
 		const { width, height } = ctx.canvas;
+		if (width == 0 || height == 0) return;
 
 		const style = getComputedStyle(document.body)
 		const background = style.getPropertyValue('--color--background-100') || '200, 200, 200';
@@ -96,7 +97,7 @@ export class AnalyzerCanvas extends AutoResizeCanvas {
 
 			// Move what's here to the left
 			const dt = time - this.prevTime;
-			const shift = this.speed * dt;
+			const shift = Math.round(this.speed * dt);
 			ctx.globalCompositeOperation = "copy";
 			ctx.drawImage(ctx.canvas, -shift, 0);
 			ctx.globalCompositeOperation = "source-over";

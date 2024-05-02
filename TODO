@@ -1,9 +1,6 @@
-midi per-instrument
 kit piece
-	no sample = gray
 	drag piece to add
-responsive header
-	flashing analyzer background
+drawer click outside
 note colors
 sha on page
 
@@ -11,3 +8,4 @@ graph editor
 remove need for string samples
 instrument encoding
 	url encoding?
+	responsive header

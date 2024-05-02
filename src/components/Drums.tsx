@@ -73,12 +73,10 @@ const kitPiecies = {
 		transform: 'rotate(9)',
 		center: { x: 392, y: 71 },
 	},
-	//(props: JSX.HTMLAttributes<SVGEllipseElement>) => <ellipse id="crash" cx="397" cy="64" rx="183" ry="32" transform="rotate(10)" {...props} />,
 	ride: {
 		path: 'M 1185,222 a235 52 0 1 0 470 0a235 52 0 1 0 -470 0',
 		center: { x: 1318, y: 227 },
 	},
-	// (props: JSX.HTMLAttributes<SVGEllipseElement>) => <ellipse id="ride" cx="1420" cy="222" rx="235" ry="52" {...props} />,
 } as { [k: string]: {
 	path: string,
 	transform?: string,
@@ -124,10 +122,9 @@ export function Drums(props: DrumsProps) {
 			}
 			const key = ev.key.toLowerCase();
 			if (key in hotkeys) {
-				ev.preventDefault();
 				let sample = hotkeys[key];
 				if (sample == 'hat') sample = `hat-${hatOpen() ? 'open' : 'closed'}`;
-				props.player.play(sample);
+				playSample()(ev, sample);
 			}
 		}
 
@@ -155,7 +152,7 @@ export function Drums(props: DrumsProps) {
 	});
 
 	const playSample = createMemo(() => {
-		return (ev: MouseEvent, name: string) => {
+		return (ev: Event, name: string) => {
 			ev.preventDefault();
 			props.player.play(name);
 		};
@@ -206,33 +203,37 @@ export function Drums(props: DrumsProps) {
 					xmlns="http://www.w3.org/2000/svg"
 					stroke="white"
 					stroke-width="2"
-					fill-opacity="0"
+					fill="black"
 				>
 					<For each={Object.entries(kitPiecies)}>
-						{([kitPiece, details]) =>
-							<>
-								<text
-									class={styles.text}
-									dominant-baseline="middle"
-									x={details.center.x}
-									y={details.center.y + ((kitPiece == 'hat' && !hatOpen()) ? 18 : 0)}
-								>
-									{hotkeyName(kitHotkeys[kitPiece])}
-								</text>
-								<path
-									d={details.path}
-									transform={details?.transform}
-									onMouseDown={(ev: MouseEvent) => {
-										if (ev.button != 0) return;
-										let sample = kitPiece;
-										if (kitPiece == 'hat') {
-											sample = hatOpen() ? 'hat-open' : 'hat-closed';
-										}
-										playSample()(ev, sample);
-									}}
-								/>
-							</>
-						}
+						{([kitPiece, details]) => {
+							const sample = createMemo(() => {
+								if (kitPiece == 'hat') {
+									return hatOpen() ? 'hat-open' : 'hat-closed';
+								}
+								return kitPiece;
+							});
+							return (
+								<g fill-opacity={sample() in samples ? 0 : 0.75}>
+									<text
+										class={styles.text}
+										dominant-baseline="middle"
+										x={details.center.x}
+										y={details.center.y + (sample() == 'hat-closed' ? 18 : 0)}
+									>
+										{hotkeyName(kitHotkeys[kitPiece])}
+									</text>
+									<path
+										d={details.path}
+										transform={details?.transform}
+										onMouseDown={(ev: MouseEvent) => {
+											if (ev.button != 0) return;
+											playSample()(ev, sample());
+										}}
+									/>
+								</g>
+							);
+						}}
 					</For>
 					<text class={styles.text} x="400" y="1090" transform="rotate(30)" transform-origin="274 1129">
 						{hotkeyName(kitHotkeys['hat-pedal'])}
