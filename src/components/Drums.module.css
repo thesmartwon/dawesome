@@ -1,33 +1,38 @@
 .drums {
+	--button-width: 64px;
+	--scrollbar-width: 16px;
 	display: flex;
-	height: 100%;
+	height: inherit;
 	flex-direction: column;
 }
 
 .played {
-	flex: 1;
+	height: 20%;
 }
 
-.drumKit {
-	display: flex;
-}
-
-.drumKitKit {
-	width: 64em;
-}
-
-.drumKitKit > svg {
-	width: 64em;
-	position: absolute;
-}
-
-.drumKitKit > svg > ellipse {
-	transform-box: fill-box;
-	transform-origin: center;
+.grid {
+	height: 80%;
+	display: grid;
+	--pad-width: calc(var(--button-width) * 2 + var(--scrollbar-width));
+	grid-template-columns: var(--pad-width) [img] minmax(200px, 1fr) var(--pad-width);
 }
 
 .pad {
-	flex: 1;
+	display: flex;
+	flex-wrap: wrap;
+	align-content: flex-start;
+	overflow-y: auto;
+}
+
+.pad > button {
+	width: 50%;
+	height: var(--button-width);
+}
+
+.drumKit {
+	display: block;
+	grid-column: img;
+	grid-row: 1;
 }
 
 .text {

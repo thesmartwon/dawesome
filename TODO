@@ -1,11 +1,5 @@
-fix hot reload
-fix computations created outside a `createRoot` or `render` will never be disposed
-instrument selection
-forms
-	- stringed instrument creation
-	- note drawing (eval?)
-drums
+- remove need for string samples
 
 responsive header
-
-optimize analyzer CPU when not playing
+	- flashing analyzer background
+note colors

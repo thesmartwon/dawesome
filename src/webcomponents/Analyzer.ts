@@ -25,7 +25,7 @@ export class AnalyzerCanvas extends AutoResizeCanvas {
 				this.raf();
 			}
 		} else {
-			this._timeout = setTimeout(() => this._dirty = false, this.canvas.width / this.speed + 100);
+			this._timeout = setTimeout(() => this._dirty = false, this.canvas.width / this.speed + 500);
 		}
 	}
 

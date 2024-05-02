@@ -161,69 +161,78 @@ export function Drums(props: DrumsProps) {
 		};
 	});
 
+	const buttons = createMemo(() => {
+		const res = Object.entries(samples).filter(([name]) => !(name in kitPiecies));
+		return res;
+	});
+	function Button(name: string, buffer: AudioBuffer | null) {
+		return (
+			<button
+				disabled={!buffer}
+				onClick={() => props.player.play(name)}
+			>
+				{name}
+			</button>
+		);
+	}
+
 	return (
 		<div class={styles.drums}>
 			<div class={styles.played}>
 			</div>
-			<div class={styles.drumKit} onMouseDown={ev => {
+			<div class={styles.grid} onMouseDown={ev => {
 				// prevent double clicking from highlighting
 				ev.preventDefault();
 			}}>
 				<div class={styles.pad}>
-					<For each={Object.entries(samples).filter(([name]) => !(name in kitPiecies))}>
-						{([name, buffer]) =>
-							<button
-								disabled={!buffer}
-								onClick={() => props.player.play(name)}
-							>
-								{name}
-							</button>
-						}
+					<For each={buttons().slice(0, buttons().length / 2)}>
+						{([name, buffer]) => Button(name, buffer)}
 					</For>
 				</div>
-				<div class={styles.drumKitKit}>
-					<svg
-						viewBox="0 0 1800 1248"
-						xmlns="http://www.w3.org/2000/svg"
-						stroke="white"
-						stroke-width="2"
-						fill-opacity="0"
-					>
-						<For each={Object.entries(kitPiecies)}>
-							{([kitPiece, details]) =>
-								<>
-									<text
-										class={styles.text}
-										dominant-baseline="middle"
-										x={details.center.x}
-										y={details.center.y + ((kitPiece == 'hat' && !hatOpen()) ? 18 : 0)}
-									>
-										{hotkeyName(kitHotkeys[kitPiece])}
-									</text>
-									<path
-										d={details.path}
-										transform={details?.transform}
-										onMouseDown={(ev: MouseEvent) => {
-											if (ev.button != 0) return;
-											let sample = kitPiece;
-											if (kitPiece == 'hat') {
-												sample = hatOpen() ? 'hat-open' : 'hat-closed';
-											}
-											playSample()(ev, sample);
-										}}
-									/>
-								</>
-							}
-						</For>
-						<text class={styles.text} x="400" y="1090" transform="rotate(30)" transform-origin="274 1129">
-							{hotkeyName(kitHotkeys['hat-pedal'])}
-						</text>
-					</svg>
-					<img src={hatOpen() ? drumKitHatOpen : drumKitHatClosed} />
-				</div>
 				<div class={styles.pad}>
-					right
+					<For each={buttons().slice(buttons().length / 2, buttons().length)}>
+						{([name, buffer]) => Button(name, buffer)}
+					</For>
 				</div>
+				<img class={styles.drumKit} src={hatOpen() ? drumKitHatOpen : drumKitHatClosed} />
+				<svg
+					class={styles.drumKit}
+					viewBox="0 0 1800 1248"
+					xmlns="http://www.w3.org/2000/svg"
+					stroke="white"
+					stroke-width="2"
+					fill-opacity="0"
+				>
+					<For each={Object.entries(kitPiecies)}>
+						{([kitPiece, details]) =>
+							<>
+								<text
+									class={styles.text}
+									dominant-baseline="middle"
+									x={details.center.x}
+									y={details.center.y + ((kitPiece == 'hat' && !hatOpen()) ? 18 : 0)}
+								>
+									{hotkeyName(kitHotkeys[kitPiece])}
+								</text>
+								<path
+									d={details.path}
+									transform={details?.transform}
+									onMouseDown={(ev: MouseEvent) => {
+										if (ev.button != 0) return;
+										let sample = kitPiece;
+										if (kitPiece == 'hat') {
+											sample = hatOpen() ? 'hat-open' : 'hat-closed';
+										}
+										playSample()(ev, sample);
+									}}
+								/>
+							</>
+						}
+					</For>
+					<text class={styles.text} x="400" y="1090" transform="rotate(30)" transform-origin="274 1129">
+						{hotkeyName(kitHotkeys['hat-pedal'])}
+					</text>
+				</svg>
 			</div>
 		</div>
 	);
