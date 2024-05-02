@@ -11,7 +11,7 @@
 }
 
 .grid {
-	height: 80%;
+	height: 80vh;
 	display: grid;
 	--pad-width: calc(var(--button-width) * 2 + var(--scrollbar-width));
 	grid-template-columns: var(--pad-width) [img] minmax(200px, 1fr) var(--pad-width);
@@ -33,6 +33,8 @@
 	display: block;
 	grid-column: img;
 	grid-row: 1;
+	justify-self: center;
+	align-self: end;
 }
 
 .text {

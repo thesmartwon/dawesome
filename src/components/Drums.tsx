@@ -162,7 +162,12 @@ export function Drums(props: DrumsProps) {
 	});
 
 	const buttons = createMemo(() => {
-		const res = Object.entries(samples).filter(([name]) => !(name in kitPiecies));
+		const res = Object.entries(samples)
+			.filter(([name]) =>
+				!(name in kitPiecies)
+				&& !['hat-open', 'hat-closed'].includes(name)
+				|| name == 'hat'
+			);
 		return res;
 	});
 	function Button(name: string, buffer: AudioBuffer | null) {
