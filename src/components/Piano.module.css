@@ -14,7 +14,8 @@
 	z-index: 2;
 }
 
-.piano {
+.piano, .piano > daw-piano {
 	height: 33vh;
 	width: 100%;
+	display: block;
 }

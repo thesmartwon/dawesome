@@ -1,6 +1,7 @@
 import { createSignal } from 'solid-js';
 import { PitchedPlayer } from '../audio/PitchedPlayer';
 import { Piano as PianoCanvas, NoteUpEvent, NoteDownEvent } from '../webcomponents/Piano';
+import { ContextMenu, Menu, MenuItem, SelectMidi } from './index';
 import { globalAnalyzer, nPlaying } from '../audio/Player';
 import '../webcomponents/Piano'; // daw-piano
 import '../webcomponents/PianoPlayed'; // daw-piano
@@ -8,10 +9,18 @@ import styles from './Piano.module.css';
 
 export interface PianoProps {
 	player: PitchedPlayer;
-	midi?: MIDIInput;
 };
 export function Piano(props: PianoProps) {
+	const [midi, setMidi] = createSignal<MIDIInput | undefined>();
 	const [pianoRef, setPianoRef] = createSignal<PianoCanvas | undefined>();
+
+	const menu = (
+		<Menu>
+			<MenuItem>
+				<SelectMidi onSelect={setMidi} />
+			</MenuItem>
+		</Menu>
+	);
 
 	return (
 		<>
@@ -23,19 +32,20 @@ export function Piano(props: PianoProps) {
 				/>
 				<daw-piano-played prop:piano={pianoRef()} />
 			</div>
-			<daw-piano
-				ref={setPianoRef}
-				class={styles.piano}
-				onNoteDown={(ev: NoteDownEvent) => {
-					const { note, velocity } = ev.detail;
-					props.player.playNote(note, velocity);
-				}}
-				onNoteUp={(ev: NoteUpEvent) => {
-					const { note } = ev.detail;
-					props.player.stopNote(note);
-				}}
-				prop:midi={props.midi}
-			/>
+			<ContextMenu menu={menu} class={styles.piano}>
+				<daw-piano
+					ref={setPianoRef}
+					onNoteDown={(ev: NoteDownEvent) => {
+						const { note, velocity } = ev.detail;
+						props.player.playNote(note, velocity);
+					}}
+					onNoteUp={(ev: NoteUpEvent) => {
+						const { note } = ev.detail;
+						props.player.stopNote(note);
+					}}
+					prop:midi={midi()}
+				/>
+			</ContextMenu>
 		</>
 	);
 }

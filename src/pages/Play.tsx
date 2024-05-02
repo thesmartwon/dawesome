@@ -1,5 +1,5 @@
 import { onMount, createSignal, batch, Show, Switch, Match, createMemo, onCleanup } from 'solid-js';
-import { Header, ContextMenu, Menu, MenuItem, SelectMidi, InstrumentSelect, Piano, Drums } from '../components';
+import { Header, InstrumentSelect, Piano, Drums } from '../components';
 import { PitchedPlayer, NoteUrlGain, Dynamic, dynamicToGain } from '../audio/PitchedPlayer';
 import { Player } from '../audio/Player';
 import { Note } from 'tonal';
@@ -50,16 +50,15 @@ function createPlayer(index: SampleIndex, category: string, name: string): AnyPl
 interface InstrumentProps {
 	name: string;
 	player?: Player;
-	midi?: MIDIInput;
 };
 function Instrument(props: InstrumentProps) {
 	return (
 		<Switch>
 			<Match when={props.player instanceof PitchedPlayer}>
-				<Piano player={props.player as PitchedPlayer} midi={props.midi} />
+				<Piano player={props.player as PitchedPlayer} />
 			</Match>
 			<Match when={props.player instanceof Player}>
-				<Drums player={props.player as Player} midi={props.midi} name={props.name} />
+				<Drums player={props.player as Player} name={props.name} />
 			</Match>
 		</Switch>
 	);
@@ -69,7 +68,6 @@ export interface PlayProps {
 	index?: SampleIndex;
 };
 export function Play(props: PlayProps) {
-	const [midi, setMidi] = createSignal<MIDIInput | undefined>();
 	const [drawerOpen, setDrawerOpen] = createSignal<boolean>(false);
 	const [category, setCategory] = createSignal('strings');
 	const [name, setName] = createSignal('Splendid Grand Piano');
@@ -92,15 +90,6 @@ export function Play(props: PlayProps) {
 		return createPlayer(props.index, category(), name());
 	});
 
-	const menu = (
-		<Menu>
-			<MenuItem>
-				<SelectMidi onSelect={setMidi} />
-			</MenuItem>
-		</Menu>
-	);
-
-	// onOpen={listMidi}
 	return (
 		<>
 			<Header onToggle={() => setDrawerOpen(!drawerOpen())} />
@@ -118,10 +107,8 @@ export function Play(props: PlayProps) {
 					/>
 				</aside>
 			</Show>
-			<main>
-				<ContextMenu menu={menu} class={styles.main}>
-					<Instrument player={player()} midi={midi()} name={name()} />
-				</ContextMenu>
+			<main class={styles.main}>
+				<Instrument player={player()} name={name()} />
 			</main>
 		</>
 	);
