@@ -164,7 +164,7 @@ export class Piano extends AutoResizeCanvas {
 
 	setOffset(n: number) {
 		this.offsetX = clamp(n, this.canvas!.width - this.virtualWidth, 0);
-		this.render();
+		this.dirty = true;
 	}
 
 	set midi(m: MIDIInput | undefined) {
@@ -183,7 +183,7 @@ export class Piano extends AutoResizeCanvas {
 	onDown(note: string, velocity: number) {
 		if (note in this.held && this.held[note] != 0) return;
 		this.held[note] = velocity;
-		this.render();
+		this.dirty = true;
 
 		const event = this.notedown;
 		event.detail.note = note;
@@ -192,8 +192,9 @@ export class Piano extends AutoResizeCanvas {
 	}
 
 	onUp(note: string) {
+		if (note == '') return;
 		delete this.held[note];
-		this.render();
+		this.dirty = true;
 
 		const event = this.noteup;
 		event.detail.note = note;
@@ -243,7 +244,7 @@ export class Piano extends AutoResizeCanvas {
 		const dir = this.rotate ? -ev.deltaY : ev.deltaY;
 		this.setOffset(this.offsetX - dir);
 		this.onMouseMove(ev);
-		this.render();
+		this.dirty = true;
 	}
 
 	onDownOrUp(note: string, isDown: boolean, velocity = 50) {
@@ -304,7 +305,7 @@ export class Piano extends AutoResizeCanvas {
 		} else if (ev.key == 'Shift') {
 			Object.keys(this.held).forEach(note => this.onDownOrUp(note, false));
 		}
-		this.render();
+		this.dirty = true;
 	}
 
 	renderKey(key: Key) {
@@ -344,6 +345,7 @@ export class Piano extends AutoResizeCanvas {
 
 		for (let i = 0; i < this.whiteKeys.length; i++) this.renderKey(this.whiteKeys[i]);
 		for (let i = 0; i < this.blackKeys.length; i++) this.renderKey(this.blackKeys[i]);
+		this.dirty = false;
 	}
 }
 

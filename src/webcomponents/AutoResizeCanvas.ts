@@ -7,6 +7,23 @@ export class AutoResizeCanvas extends HTMLElement {
 	canvas = document.createElement('canvas');
 	prevTime: DOMHighResTimeStamp = performance.now();
 
+	#dirty = false;
+	animationFrame = 0;
+
+	get dirty() {
+		return this.#dirty;
+	}
+
+	set dirty(val: boolean) {
+		const wasDirty = this.#dirty;
+		this.#dirty = val;
+		if (val && !wasDirty) {
+			this.prevTime = performance.now();
+			cancelAnimationFrame(this.animationFrame);
+			this.raf();
+		}
+	}
+
 	connectedCallback() {
 		this.appendChild(this.canvas);
 
@@ -36,11 +53,13 @@ export class AutoResizeCanvas extends HTMLElement {
 		this.raf();
 	}
 
-	render(time: DOMHighResTimeStamp) {
-		this.prevTime = time;
-	}
+	render(_time: DOMHighResTimeStamp) {}
 
 	raf() {
-		requestAnimationFrame(this.render.bind(this));
+		this.animationFrame = requestAnimationFrame(time => {
+			this.render(time);
+			this.prevTime = time;
+			if (this.dirty) this.raf();
+		});
 	}
 }

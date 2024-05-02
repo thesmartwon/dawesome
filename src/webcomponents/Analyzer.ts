@@ -7,7 +7,6 @@ export class AnalyzerCanvas extends AutoResizeCanvas {
 	_node?: AnalyserNode;
 	_nPlaying = 0;
 	_timeout = 0;
-	_dirty = true;
 	mode: 'oscilliscope' | 'spectrometer' | 'spectrogram' | undefined;
 	speed = 1;
 
@@ -18,14 +17,11 @@ export class AnalyzerCanvas extends AutoResizeCanvas {
 
 	set nPlaying(n: number) {
 		this._nPlaying = n;
+		clearTimeout(this._timeout);
 		if (n > 0) {
-			clearTimeout(this._timeout);
-			if (!this._dirty) {
-				this._dirty = true;
-				this.raf();
-			}
+			this.dirty = true;
 		} else {
-			this._timeout = setTimeout(() => this._dirty = false, this.canvas.width / this.speed + 500);
+			this._timeout = setTimeout(() => this.dirty = false, this.canvas.width / this.speed + 500);
 		}
 	}
 
@@ -126,9 +122,6 @@ export class AnalyzerCanvas extends AutoResizeCanvas {
 			ctx.textAlign = 'center';
 			ctx.fillText('set valid mode', width / 2, height / 2);
 		}
-
-		if (this._dirty) this.raf();
-		super.render(time);
 	}
 
 	getColor(value: number) {

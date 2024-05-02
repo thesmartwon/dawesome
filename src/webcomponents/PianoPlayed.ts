@@ -27,7 +27,6 @@ export class PianoPlayed extends AutoResizeCanvas {
 
 	_piano?: Piano;
 	cleanup = () => {};
-	dirty = false;
 
 	set piano(p: Piano | undefined) {
 		this._piano = p;
@@ -69,8 +68,7 @@ export class PianoPlayed extends AutoResizeCanvas {
 				break;
 			}
 		}
-		this.prevTime = performance.now();
-		if (!this.dirty) this.raf();
+		this.dirty = true;
 	}
 
 	onNoteUp(note: string) {
@@ -81,8 +79,7 @@ export class PianoPlayed extends AutoResizeCanvas {
 				break;
 			}
 		}
-		this.prevTime = performance.now();
-		if (!this.dirty) this.raf();
+		this.dirty = true;
 	}
 
 	private renderKey(key: Key) {
@@ -107,7 +104,6 @@ export class PianoPlayed extends AutoResizeCanvas {
 	render(time: DOMHighResTimeStamp) {
 		const dt = (time - this.prevTime) / 1000;
 		const ctx = this.ctx();
-		if (ctx.canvas.width == 0 || ctx.canvas.height == 0) return;
 
 		ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
@@ -119,9 +115,7 @@ export class PianoPlayed extends AutoResizeCanvas {
 
 		for (let i = 0; i < this.keys.length; i++) this.renderKey(this.keys[i]);
 
-		this.prevTime = time;
 		this.dirty = this.keys.length > 0;
-		if (this.dirty) this.raf();
 	}
 }
 
