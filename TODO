@@ -1,5 +1,6 @@
-- remove need for string samples
-
+midi per-instrument
 responsive header
-	- flashing analyzer background
+	flashing analyzer background
 note colors
+
+remove need for string samples
