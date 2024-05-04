@@ -350,3 +350,15 @@ export class Piano extends AutoResizeCanvas {
 }
 
 customElements.define('daw-piano', Piano);
+
+declare module "solid-js" {
+	namespace JSX {
+		interface IntrinsicElements {
+			["daw-piano"]: {
+				["prop:midi"]?: MIDIInput,
+				onNoteDown: (ev: NoteDownEvent) => void,
+				onNoteUp: (ev: NoteUpEvent) => void,
+			} & HTMLAttributes<HTMLElement>,
+		}
+	}
+}

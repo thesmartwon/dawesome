@@ -1,11 +1,10 @@
-import { createStore, reconcile } from 'solid-js/store';
-import { For, createEffect, createMemo, createSignal, onCleanup, onMount, JSX } from 'solid-js';
-import { Player, Samples } from '../audio/Player';
+import { For, createMemo, createSignal, onCleanup, onMount } from 'solid-js';
+import { Sampler, Sample } from '../audio/index';
 import drumKitHatClosed from './drum-kit-hat-closed.png';
 import drumKitHatOpen from './drum-kit-hat-open.png';
 import styles from './Drums.module.css';
 
-// ordered back to front visually.
+// ordered back to front
 const kitPiecies = {
 	kick: {
 		path: `M 855,556
@@ -60,13 +59,21 @@ const kitPiecies = {
 				370,448 467,442 517,445 Z`,
 		center: { x: 508, y: 484 },
 	},
-	hat: {
+	"hat-open": {
 		path: `M 239,356
 			C 323,365 412,361 403,388
 				411,411 269,423 237,422
 				115,412 71,416 73,386
 				64,364 158,360 239,356 Z`,
 		center: { x: 237, y: 387 },
+	},
+	"hat-closed": {
+		path: `M 239,356
+			C 323,365 412,361 403,388
+				411,411 269,423 237,422
+				115,412 71,416 73,386
+				64,364 158,360 239,356 Z`,
+		center: { x: 237, y: 387 + 18 },
 	},
 	crash: {
 		path: 'M 222,1 a183 32 0 1 0 366 0a183 32 0 1 0 -366 0',
@@ -106,11 +113,10 @@ const kitHotkeys = Object.entries(hotkeys).reduce((acc, [k, v]) => {
 
 export interface DrumsProps {
 	name: string;
-	player: Player;
+	player: Sampler;
 	midi?: MIDIInput;
 };
 export function Drums(props: DrumsProps) {
-	const [samples, setSamples] = createStore<Samples>({});
 	const [hatOpen, setHatOpen] = createSignal(true);
 
 	onMount(() => {
@@ -143,35 +149,33 @@ export function Drums(props: DrumsProps) {
 		});
 	});
 
-	createEffect(() => {
-		setSamples(reconcile(props.player.samples));
-		const watching = props.player;
-		props.player.onLoaded = (name, buffer) => {
-			if (watching === props.player) setSamples(name, buffer);
-		};
-	});
+	const kitSamples = createMemo(() =>
+		Object.entries(props.player.samples)
+			.reduce((acc, [name, sample]) => {
+				const n = name;
+				if (n in kitPiecies && !(n in acc)) {
+					acc[n] = sample;
+				}
+				return acc;
+			}, {} as { [k: string]: Sample })
+	);
 
 	const playSample = createMemo(() => {
 		return (ev: Event, name: string) => {
 			ev.preventDefault();
-			props.player.play(name);
+			props.player.attack(name);
 		};
 	});
 
-	const buttons = createMemo(() => {
-		const res = Object.entries(samples)
-			.filter(([name]) =>
-				!(name in kitPiecies)
-				&& !['hat-open', 'hat-closed'].includes(name)
-				|| name == 'hat'
-			);
-		return res;
-	});
-	function Button(name: string, buffer: AudioBuffer | null) {
+	const buttons = createMemo(() =>
+		Object.entries(props.player.samples)
+			.filter(([name]) => !(name in kitPiecies))
+	);
+	function Button(name: string, sample: Sample) {
 		return (
 			<button
-				disabled={!buffer}
-				onClick={() => props.player.play(name)}
+				disabled={!sample}
+				onClick={ev => playSample()(ev, name)}
 			>
 				{name}
 			</button>
@@ -179,66 +183,63 @@ export function Drums(props: DrumsProps) {
 	}
 
 	return (
-		<div class={styles.drums}>
-			<div class={styles.played}>
+		<div class={styles.drums} onMouseDown={ev => {
+			// prevent double clicking from highlighting
+			ev.preventDefault();
+		}}>
+			<div class={styles.pad}>
+				<For each={buttons().slice(0, buttons().length / 2)}>
+					{([name, sample]) => Button(name, sample)}
+				</For>
 			</div>
-			<div class={styles.grid} onMouseDown={ev => {
-				// prevent double clicking from highlighting
-				ev.preventDefault();
-			}}>
-				<div class={styles.pad}>
-					<For each={buttons().slice(0, buttons().length / 2)}>
-						{([name, buffer]) => Button(name, buffer)}
-					</For>
-				</div>
-				<div class={styles.pad}>
-					<For each={buttons().slice(buttons().length / 2, buttons().length)}>
-						{([name, buffer]) => Button(name, buffer)}
-					</For>
-				</div>
-				<img class={styles.drumKit} src={hatOpen() ? drumKitHatOpen : drumKitHatClosed} />
-				<svg
-					class={styles.drumKit}
-					viewBox="0 0 1800 1248"
-					xmlns="http://www.w3.org/2000/svg"
-					stroke="white"
-					stroke-width="2"
-					fill="black"
-				>
-					<For each={Object.entries(kitPiecies)}>
-						{([kitPiece, details]) => {
-							const sample = createMemo(() => {
-								if (kitPiece == 'hat') {
-									return hatOpen() ? 'hat-open' : 'hat-closed';
-								}
-								return kitPiece;
-							});
-							return (
-								<g fill-opacity={sample() in samples ? 0 : 0.75}>
-									<text
-										class={styles.text}
-										dominant-baseline="middle"
-										x={details.center.x}
-										y={details.center.y + (sample() == 'hat-closed' ? 18 : 0)}
-									>
-										{hotkeyName(kitHotkeys[kitPiece])}
-									</text>
-									<path
-										d={details.path}
-										transform={details?.transform}
-										onMouseDown={(ev: MouseEvent) => {
-											if (ev.button != 0) return;
-											playSample()(ev, sample());
-										}}
-									/>
-								</g>
-							);
-						}}
-					</For>
-					<text class={styles.text} x="400" y="1090" transform="rotate(30)" transform-origin="274 1129">
-						{hotkeyName(kitHotkeys['hat-pedal'])}
-					</text>
-				</svg>
+			<svg
+				class={styles.drumKit}
+				viewBox="0 0 1800 1248"
+				xmlns="http://www.w3.org/2000/svg"
+				stroke="white"
+				stroke-width="2"
+				fill="black"
+			>
+				<image href={hatOpen() ? drumKitHatOpen : drumKitHatClosed} />
+				<For each={Object.entries(kitPiecies)}>
+					{([kitPiece, details]) => {
+						const sample = kitPiece;
+						const hidden = createMemo(() => (kitPiece == 'hat-closed' && hatOpen())
+							|| (kitPiece == 'hat-open' && !hatOpen())
+						);
+						return (
+							<g
+								fill-opacity={(sample in kitSamples()) ? 0 : 0.75}
+								display={hidden() ? 'none' : 'unset'}
+							>
+								<text
+									class={styles.text}
+									dominant-baseline="middle"
+									x={details.center.x}
+									y={details.center.y}
+								>
+									{hotkeyName(kitHotkeys[kitPiece.startsWith('hat') ? 'hat' : kitPiece])}
+								</text>
+								<path
+									d={details.path}
+									transform={details?.transform}
+									onMouseDown={(ev: MouseEvent) => {
+										if (ev.button != 0) return;
+										playSample()(ev, sample);
+									}}
+								/>
+							</g>
+						);
+					}}
+				</For>
+				<text class={styles.text} x="400" y="1090" transform="rotate(30)" transform-origin="274 1129">
+					{hotkeyName(kitHotkeys['hat-pedal'])}
+				</text>
+			</svg>
+			<div class={styles.pad}>
+				<For each={buttons().slice(buttons().length / 2, buttons().length)}>
+					{([name, sample]) => Button(name, sample)}
+				</For>
 			</div>
 		</div>
 	);

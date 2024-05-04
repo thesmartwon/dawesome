@@ -50,7 +50,7 @@ export class AutoResizeCanvas extends HTMLElement {
 		else if (name == 'height') this.canvas.height = +value;
 		else if (name == 'width') this.canvas.width = +value;
 		else if (name in this) (this as any)[name] = value;
-		this.raf();
+		this.dirty = true;
 	}
 
 	render(_time: DOMHighResTimeStamp) {}

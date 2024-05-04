@@ -25,12 +25,14 @@ export class PianoPlayed extends AutoResizeCanvas {
 
 	keys: DisplayKey[] = [];
 
-	_piano?: Piano;
+	#piano?: Piano;
 	cleanup = () => {};
 
 	set piano(p: Piano | undefined) {
-		this._piano = p;
+		this.#piano = p;
 		this.keys = [];
+		if (!p) return;
+
 		const noteDown = (ev: NoteDownEvent) => {
 			const { note, velocity } = ev.detail;
 			this.onNoteDown(note, velocity);
@@ -57,10 +59,10 @@ export class PianoPlayed extends AutoResizeCanvas {
 	}
 
 	onNoteDown(note: string, velocity: number) {
-		if (!this._piano) return;
+		if (!this.#piano) return;
 		const isWhite = note[1] != '#';
 
-		const collection = isWhite ? this._piano.whiteKeys : this._piano.blackKeys;
+		const collection = isWhite ? this.#piano.whiteKeys : this.#piano.blackKeys;
 
 		for (let i = 0; i < collection.length; i++) {
 			if (collection[i].note == note) {
@@ -83,13 +85,13 @@ export class PianoPlayed extends AutoResizeCanvas {
 	}
 
 	private renderKey(key: Key) {
-		if (!this._piano) return;
+		if (!this.#piano) return;
 
 		const ctx = this.ctx();
 		const isWhite = key.note[1] != '#';
 
 		let { x, y, width, height, isDown } = key;
-		x += this._piano.offsetX;
+		x += this.#piano.offsetX;
 		if (x + width < 0 || x > ctx.canvas.width) return;
 
 		ctx.fillStyle = isWhite ? 'white' : 'black';
@@ -120,3 +122,13 @@ export class PianoPlayed extends AutoResizeCanvas {
 }
 
 customElements.define('daw-piano-played', PianoPlayed);
+
+declare module "solid-js" {
+	namespace JSX {
+		interface IntrinsicElements {
+			["daw-piano-played"]: {
+				["prop:piano"]?: Piano,
+			} & HTMLAttributes<HTMLElement>,
+		}
+	}
+}

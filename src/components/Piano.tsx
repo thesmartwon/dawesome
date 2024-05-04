@@ -1,14 +1,25 @@
 import { createSignal } from 'solid-js';
-import { PitchedPlayer } from '../audio/PitchedPlayer';
+import { Note } from 'tonal';
+import { Synth } from '../audio/index';
 import { Piano as PianoCanvas, NoteUpEvent, NoteDownEvent } from '../webcomponents/Piano';
 import { ContextMenu, Menu, MenuItem, SelectMidi } from './index';
-import { globalAnalyzer, nPlaying } from '../audio/Player';
 import '../webcomponents/Piano'; // daw-piano
 import '../webcomponents/PianoPlayed'; // daw-piano
 import styles from './Piano.module.css';
 
+// https://www.midi.org/specifications/file-format-specifications/dls-downloadable-sounds/dls-level-1
+export function midiVelToGain(vel: number) {
+  return (vel * vel) / 16129; // 16129 = 127 * 127
+}
+
+function getFreq(note: string): number {
+	const res = Note.freq(note);
+	if (!res) throw new Error('could not parse frequency for note ' + note);
+	return res;
+}
+
 export interface PianoProps {
-	player: PitchedPlayer;
+	player: Synth;
 };
 export function Piano(props: PianoProps) {
 	const [midi, setMidi] = createSignal<MIDIInput | undefined>();
@@ -25,11 +36,7 @@ export function Piano(props: PianoProps) {
 	return (
 		<>
 			<div class={styles.played}>
-				<daw-analyzer
-					prop:mode="spectrogram"
-					prop:node={globalAnalyzer}
-					prop:nPlaying={nPlaying()}
-				/>
+				<daw-analyzer mode="spectrograph" prop:analyzer={props.player.ctx.analyzer} />
 				<daw-piano-played prop:piano={pianoRef()} />
 			</div>
 			<ContextMenu menu={menu} class={styles.piano}>
@@ -37,11 +44,14 @@ export function Piano(props: PianoProps) {
 					ref={setPianoRef}
 					onNoteDown={(ev: NoteDownEvent) => {
 						const { note, velocity } = ev.detail;
-						props.player.playNote(note, velocity);
+						const freq = getFreq(note);
+						const gain = midiVelToGain(velocity);
+						props.player.attack(freq, { gain });
 					}}
 					onNoteUp={(ev: NoteUpEvent) => {
 						const { note } = ev.detail;
-						props.player.stopNote(note);
+						const freq = getFreq(note);
+						props.player.release(freq);
 					}}
 					prop:midi={midi()}
 				/>

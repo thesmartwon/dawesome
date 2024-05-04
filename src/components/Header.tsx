@@ -1,22 +1,22 @@
 import { A } from '@solidjs/router';
 import styles from './Header.module.css';
 import { OcThreebars2 } from 'solid-icons/oc'
-import { globalGain, globalAnalyzer, nPlaying } from '../audio/Player';
+import { Context } from '../audio/index';
 import { createSignal, createEffect, Switch, Match } from 'solid-js';
 import { IoVolumeHighOutline, IoVolumeMediumOutline, IoVolumeLowOutline, IoVolumeOffOutline } from 'solid-icons/io'
 import '../webcomponents/Analyzer'; // daw-analyzer
-import { JSX } from 'solid-js';
 
 export interface HeaderProps {
 	onToggle?(): void;
 	ref?: HTMLElement;
+	ctx: Context,
 };
 export function Header(props: HeaderProps) {
-	const [volume, setVolume] = createSignal(globalGain.gain.value * 100);
+	const [volume, setVolume] = createSignal(props.ctx.gain.gain.value * 100);
 	const [lastVolume, setLastVolume] = createSignal(volume());
 
 	createEffect(() => {
-		globalGain.gain.value = volume() / 100;
+		props.ctx.gain.gain.value = volume() / 100;
 	});
 
 	function toggleMute() {
@@ -38,12 +38,7 @@ export function Header(props: HeaderProps) {
 			<A {...aprops} href="/play">Play</A>
 			<A {...aprops} href="/sequence">Sequence</A>
 			<A {...aprops} href="/arrange">Arrange</A>
-			<daw-analyzer
-				class={styles.analyzer}
-				prop:mode="spectrometer"
-				prop:node={globalAnalyzer}
-				prop:nPlaying={nPlaying()}
-			/>
+			<daw-analyzer class={styles.analyzer} mode="spectrometer" prop:analyzer={props.ctx.analyzer} />
 			<div class={styles.volume}>
 				<button onClick={toggleMute}>
 					<Switch>
@@ -71,19 +66,4 @@ export function Header(props: HeaderProps) {
 			</div>
 		</nav>
 	);
-}
-
-type ElementProps<T> = {
-	// Add both the element's prefixed properties and the attributes
-	[K in keyof T]: Props<T[K]> & JSX.HTMLAttributes<T[K]>;
-}
-// Prefixes all properties with `prop:` to match Solid's property setting syntax
-type Props<T> = {
-	[K in keyof T as `prop:${string & K}`]?: T[K];
-}
-
-declare global {
-  namespace JSX {
-    interface IntrinsicElements extends ElementProps<HTMLElementTagNameMap> {}
-  }
 }

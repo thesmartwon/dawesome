@@ -1,27 +1,27 @@
 import { AutoResizeCanvas } from './AutoResizeCanvas';
 
 export class AnalyzerCanvas extends AutoResizeCanvas {
-	static observedAttributes = ['nPlaying', 'mode', ...super.observedAttributes];
+	static observedAttributes = ['mode', ...super.observedAttributes];
 
 	dataArray = new Uint8Array();
-	_node?: AnalyserNode;
-	_nPlaying = 0;
-	_timeout = 0;
-	mode: 'oscilliscope' | 'spectrometer' | 'spectrogram' | undefined;
+	mode?: 'oscilliscope' | 'spectrometer' | 'spectrograph';
 	speed = 0.5;
+	timeout = 0;
+	#analyzer?: AnalyserNode;
 
-	set node(n: AnalyserNode) {
-		this._node = n;
-		this.dataArray = new Uint8Array(Math.max(n.fftSize, n.frequencyBinCount));
+	set analyzer(analyzer: AnalyserNode) {
+		this.dataArray = new Uint8Array(Math.max(analyzer.fftSize, analyzer.frequencyBinCount));
+		this.#analyzer = analyzer;
+		analyzer.context.addEventListener('statechange', () => this.onStateChange(analyzer.context.state));
+		this.dirty = analyzer.context.state == 'running';
 	}
 
-	set nPlaying(n: number) {
-		this._nPlaying = n;
-		clearTimeout(this._timeout);
-		if (n > 0) {
+	onStateChange(state: AudioContextState) {
+		clearTimeout(this.timeout);
+		if (state == 'running') {
 			this.dirty = true;
-		} else {
-			this._timeout = setTimeout(() => this.dirty = false, this.canvas.width / this.speed + 500);
+		} else if (state == 'suspended') {
+			this.timeout = setTimeout(() => this.dirty = false, this.canvas.width / this.speed + 500);
 		}
 	}
 
@@ -37,15 +37,20 @@ export class AnalyzerCanvas extends AutoResizeCanvas {
 		ctx.strokeStyle = "rgb(0, 0, 0)";
 
 		const bufferLength = (this.mode == 'oscilliscope'
-			? this._node?.fftSize
-			: this._node?.frequencyBinCount) ?? 1;
+			? this.#analyzer?.fftSize
+			: this.#analyzer?.frequencyBinCount) ?? 1;
 		const sliceWidth = (width * 1.0) / bufferLength;
 		let x = 0;
 		let y = height;
+		const running = this.#analyzer?.context.state == 'running';
 
 		if (this.mode == 'oscilliscope') {
 			// Each array value is a sample, the magnitude of the signal at a particular time.
-			this._node?.getByteTimeDomainData(this.dataArray);
+			if (running) {
+				this.#analyzer?.getByteTimeDomainData(this.dataArray);
+			} else {
+				this.dataArray.fill(0);
+			}
 
 			ctx.fillRect(0, 0, width, height);
 			ctx.beginPath();
@@ -65,9 +70,13 @@ export class AnalyzerCanvas extends AutoResizeCanvas {
 		} else if (this.mode == 'spectrometer') {
 			// Each item in the array represents the decibel value for a specific frequency.
 			// The frequencies are spread linearly from 0 to 1/2 of the sample rate.
-			// For example, for 48000 sample rate, the last item of the array will
-			// represent the decibel value for 24000 Hz.
-			this._node?.getByteFrequencyData(this.dataArray);
+			// For example, for 48100 sample rate, the last item of the array will
+			// represent the decibel value for 24050 Hz.
+			if (running) {
+				this.#analyzer?.getByteFrequencyData(this.dataArray);
+			} else {
+				this.dataArray.fill(0);
+			}
 
 			ctx.fillRect(0, 0, width, height);
 			ctx.beginPath();
@@ -92,8 +101,12 @@ export class AnalyzerCanvas extends AutoResizeCanvas {
 			}
 
 			ctx.stroke();
-		} else if (this.mode == 'spectrogram') {
-			this._node?.getByteFrequencyData(this.dataArray);
+		} else if (this.mode == 'spectrograph') {
+			if (running) {
+				this.#analyzer?.getByteFrequencyData(this.dataArray);
+			} else {
+				this.dataArray.fill(0);
+			}
 
 			// Move what's here to the left
 			const dt = time - this.prevTime;
@@ -169,3 +182,14 @@ export class AnalyzerCanvas extends AutoResizeCanvas {
 }
 
 customElements.define('daw-analyzer', AnalyzerCanvas);
+
+declare module "solid-js" {
+	namespace JSX {
+		interface IntrinsicElements {
+			["daw-analyzer"]: {
+				mode: AnalyzerCanvas["mode"],
+				["prop:analyzer"]: AnalyserNode,
+			} & HTMLAttributes<HTMLElement>,
+		}
+	}
+}
