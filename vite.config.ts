@@ -5,13 +5,13 @@ export default defineConfig({
 	plugins: [
 		solidPlugin(),
 		// hot reloading web components is ghetto
-		{
-			name: 'no-hmr',
-			handleHotUpdate({ server }) {
-				server.ws.send({ type: 'full-reload' });
-				return [];
-			}
-		},
+		// {
+		// 	name: 'no-hmr',
+		// 	handleHotUpdate({ server }) {
+		// 		server.ws.send({ type: 'full-reload' });
+		// 		return [];
+		// 	}
+		// },
 	],
 	server: {
 		port: 3000,

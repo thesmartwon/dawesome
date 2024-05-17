@@ -1,26 +1,26 @@
 .drums {
 	--button-width: 64px;
-	--scrollbar-width: 16px;
 	display: flex;
 	height: inherit;
 }
 
 .pad {
 	flex: 1;
-	min-width: calc(var(--button-width) * 2 + var(--scrollbar-width));
-	display: flex;
-	flex-wrap: wrap;
-	align-content: flex-start;
+	display: grid;
+	min-width: var(--button-width);
+	grid-template-columns: repeat(auto-fit, minmax(64px, 1fr));
+	align-content: start;
 	overflow-y: auto;
+	scrollbar-width: none;
 }
 
 .pad > button {
-	width: var(--button-width);
-	height: var(--button-width);
+	aspect-ratio: 1 / 1;
 }
 
 .drumKit {
-	height: inherit;
+	max-height: 100%;
+	flex: 6;
 	display: block;
 	justify-self: center;
 	align-self: end;
