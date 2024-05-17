@@ -4,3 +4,4 @@ export * from './SelectMidi';
 export * from './InstrumentSelect';
 export * from './Piano';
 export * from './Drums';
+export * from './NodeEditor';

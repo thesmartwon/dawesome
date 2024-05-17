@@ -3,6 +3,7 @@ import { AttackOptions } from './Sampler';
 
 export class Synth {
 	held: { [freq: number]: AudioScheduledSourceNode } = {};
+
 	constructor(public ctx: Context) {}
 
 	attack(frequency: number, opts?: AttackOptions) {

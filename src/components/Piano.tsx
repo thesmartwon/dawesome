@@ -2,7 +2,7 @@ import { createSignal } from 'solid-js';
 import { Note } from 'tonal';
 import { Synth } from '../audio/index';
 import { Piano as PianoCanvas, NoteUpEvent, NoteDownEvent } from '../webcomponents/Piano';
-import { ContextMenu, Menu, MenuItem, SelectMidi } from './index';
+import { ContextMenu, Menu, MenuItem, SelectMidi, NodeEditor } from './index';
 import '../webcomponents/Piano'; // daw-piano
 import '../webcomponents/PianoPlayed'; // daw-piano
 import styles from './Piano.module.css';
@@ -33,11 +33,12 @@ export function Piano(props: PianoProps) {
 		</Menu>
 	);
 
+				//<daw-analyzer mode="spectrograph" prop:analyzer={props.player.ctx.analyzer} />
+				//<daw-piano-played prop:piano={pianoRef()} />
 	return (
 		<>
 			<div class={styles.played}>
-				<daw-analyzer mode="spectrograph" prop:analyzer={props.player.ctx.analyzer} />
-				<daw-piano-played prop:piano={pianoRef()} />
+				<NodeEditor />
 			</div>
 			<ContextMenu menu={menu} class={styles.piano}>
 				<daw-piano

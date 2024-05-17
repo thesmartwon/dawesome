@@ -13,6 +13,7 @@
 	height: var(--width);
 	transform-origin: top left;
 	transform: rotate(-90deg) translateX(calc(-1 * var(--height)));
+	max-width: unset;
 }
 
 .sequencer {
