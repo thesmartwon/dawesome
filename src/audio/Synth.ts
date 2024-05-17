@@ -3,6 +3,7 @@ import { AttackOptions } from './Sampler';
 
 export class Synth {
 	held: { [freq: number]: AudioScheduledSourceNode } = {};
+	effect?: AudioNode;
 
 	constructor(public ctx: Context) {}
 
@@ -12,7 +13,7 @@ export class Synth {
 			type: 'sine',
 		});
 
-		this.ctx.play(source);
+		this.ctx.play(source, this.effect);
 		this.held[frequency] = source;
 	}
 

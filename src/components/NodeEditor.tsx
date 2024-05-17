@@ -1,15 +1,26 @@
-import { createSignal } from 'solid-js';
+import { createSignal, For } from 'solid-js';
+import { createStore } from 'solid-js/store';
+import { Node as DisplayNode, NodeProps } from './NodeEditor/Node';
+import { Gain } from '../audio/nodes/GainNode';
+import { Context } from '../audio/Context';
 import styles from './NodeEditor.module.css';
 
 const identity = new DOMMatrix([1, 0, 0, 1, 0, 0]);
 
-export function NodeEditor() {
+interface NodeEditorProps {
+	ctx: Context;
+	onChange(node?: AudioNode): void;
+};
+export function NodeEditor(props: NodeEditorProps) {
 	const [transform, setTransform] = createSignal(identity);
 	let svg: SVGSVGElement | undefined;
+  const [nodes, setNodes] = createStore<NodeProps[]>([
+		{ node: new Gain(props.ctx.ctx, { gain: 0.2 }), x: 100, y: 100 }
+	]);
 
 	function onMouseMove(ev: MouseEvent) {
-		ev.preventDefault();
 		if (!(ev.buttons & 1)) return;
+		ev.preventDefault();
 
 		const t = transform();
 		const mat = t.translate(ev.movementX / t.a, ev.movementY / t.d);
@@ -17,8 +28,8 @@ export function NodeEditor() {
 	}
 
 	function onWheel(ev: WheelEvent) {
-		ev.preventDefault();
 		if (!svg) return;
+		ev.preventDefault();
 
 		const dir = ev.deltaY < 0 ? 1 : -1;
 		const xFactor = 1 + .05 * dir;
@@ -43,8 +54,9 @@ export function NodeEditor() {
 			ref={svg}
 		>
 			<g transform={transform().toString()}>
-				<circle cx="50" cy="50" r="40" />
-				<circle cx="150" cy="50" r="4" />
+				<For each={nodes}>{node =>
+					<DisplayNode {...node} />
+				}</For>
 			</g>
 		</svg>
 	);

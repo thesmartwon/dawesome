@@ -38,7 +38,7 @@ export function Piano(props: PianoProps) {
 	return (
 		<>
 			<div class={styles.played}>
-				<NodeEditor />
+				<NodeEditor ctx={props.player.ctx} onChange={n => props.player.effect = n} />
 			</div>
 			<ContextMenu menu={menu} class={styles.piano}>
 				<daw-piano

@@ -15,13 +15,11 @@ export class Context {
 		ctx.suspend();
 	}
 
-	play(source: AudioScheduledSourceNode) {
+	play(source: AudioScheduledSourceNode, effect?: AudioNode) {
 		this.nPlaying += 1;
 
-		source
-			.connect(this.gain)
-			.connect(this.analyzer)
-			.connect(this.ctx.destination);
+		connect([source, effect, this.gain, this.analyzer, this.ctx.destination]);
+
 		source.onended = () => {
 			this.nPlaying -= 1;
 			if (this.nPlaying == 0) this.ctx.suspend();
@@ -29,4 +27,9 @@ export class Context {
 		this.ctx.resume();
 		source.start();
 	}
+}
+
+function connect(nodes: (AudioNode | undefined)[]) {
+	(nodes.filter(Boolean) as AudioNode[])
+		.reduce((a, b) => a.connect(b));
 }
