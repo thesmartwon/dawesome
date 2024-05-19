@@ -1,10 +1,8 @@
-// Use a global context.
-// This means the analyzer will always output what the user expects.
-// The biggest downside is that sources cannot be individually recorded.
 export class Context {
 	gain: GainNode;
 	analyzer: AnalyserNode;
 	nPlaying = 0;
+	sink: AudioNode;
 
 	constructor(
 		public ctx = new AudioContext(),
@@ -12,13 +10,13 @@ export class Context {
 		this.gain = ctx.createGain();
 		this.gain.gain.value = .5;
 		this.analyzer = ctx.createAnalyser();
+		connect([this.gain, this.analyzer, ctx.destination]);
+		this.sink = this.gain;
 		ctx.suspend();
 	}
 
-	play(source: AudioScheduledSourceNode, effect?: AudioNode) {
+	play(source: AudioScheduledSourceNode) {
 		this.nPlaying += 1;
-
-		connect([source, effect, this.gain, this.analyzer, this.ctx.destination]);
 
 		source.onended = () => {
 			this.nPlaying -= 1;

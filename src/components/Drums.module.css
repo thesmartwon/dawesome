@@ -11,7 +11,6 @@
 	grid-template-columns: repeat(auto-fit, minmax(64px, 1fr));
 	align-content: start;
 	overflow-y: auto;
-	scrollbar-width: none;
 }
 
 .pad > button {

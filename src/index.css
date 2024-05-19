@@ -6,6 +6,7 @@
 	--color--border-100: 36, 36, 36;
 	--color--link: 50, 115, 220;
 	--header-height: 74px;
+	--port-diameter: 16px;
 }
 @media (prefers-color-scheme: dark) {
 	:root {

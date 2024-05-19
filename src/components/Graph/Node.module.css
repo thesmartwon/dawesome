@@ -1,0 +1,44 @@
+.form {
+	display: flex;
+	height: 100%;
+	border: 1px solid rgb(var(--color--border-100));
+}
+
+.controls {
+	flex-grow: 1;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+}
+
+.controls > h2 {
+	text-align: center;
+}
+
+.circle {
+	height: var(--port-diameter);
+	width: var(--port-diameter);
+	line-height: var(--port-diameter);
+	font-size: var(--port-diameter);
+	background: rgb(var(--color--background-100));
+	border-radius: 50%;
+	outline-width: 1px;
+	outline-style: solid;
+	display: inline-block;
+	text-align: center;
+}
+
+.audionode {
+	outline-color: pink;
+}
+
+.event {
+	outline-color: green;
+}
+
+.ports {
+	display: flex;
+	flex-direction: column;
+	justify-content: space-evenly;
+	margin: 2px;
+}

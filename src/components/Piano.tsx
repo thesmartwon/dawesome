@@ -1,8 +1,9 @@
 import { createSignal } from 'solid-js';
 import { Note } from 'tonal';
-import { Synth } from '../audio/index';
+import { Synth, Graph } from '../audio/index';
+import { Gain, MidiInput, Oscillator, Sink } from '../audio/nodes';
 import { Piano as PianoCanvas, NoteUpEvent, NoteDownEvent } from '../webcomponents/Piano';
-import { ContextMenu, Menu, MenuItem, SelectMidi, NodeEditor } from './index';
+import { ContextMenu, Menu, MenuItem, SelectMidi, Graph as NodeEditor } from './index';
 import '../webcomponents/Piano'; // daw-piano
 import '../webcomponents/PianoPlayed'; // daw-piano
 import styles from './Piano.module.css';
@@ -24,6 +25,7 @@ export interface PianoProps {
 export function Piano(props: PianoProps) {
 	const [midi, setMidi] = createSignal<MIDIInput | undefined>();
 	const [pianoRef, setPianoRef] = createSignal<PianoCanvas | undefined>();
+	const graph = new Graph(props.player.ctx);
 
 	const menu = (
 		<Menu>
@@ -38,7 +40,7 @@ export function Piano(props: PianoProps) {
 	return (
 		<>
 			<div class={styles.played}>
-				<NodeEditor ctx={props.player.ctx} onChange={n => props.player.effect = n} />
+				<NodeEditor graph={graph} />
 			</div>
 			<ContextMenu menu={menu} class={styles.piano}>
 				<daw-piano
@@ -47,12 +49,14 @@ export function Piano(props: PianoProps) {
 						const { note, velocity } = ev.detail;
 						const freq = getFreq(note);
 						const gain = midiVelToGain(velocity);
-						props.player.attack(freq, { gain });
+						(graph.nodes[0] as MidiInput).attack(freq, { gain });
+						// props.player.attack(freq, { gain });
 					}}
 					onNoteUp={(ev: NoteUpEvent) => {
 						const { note } = ev.detail;
 						const freq = getFreq(note);
-						props.player.release(freq);
+						(graph.nodes[0] as MidiInput).release(freq);
+						// props.player.release(freq);
 					}}
 					prop:midi={midi()}
 				/>
